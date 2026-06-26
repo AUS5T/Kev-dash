@@ -1,0 +1,349 @@
+/* ────────────────────────────────────────────────────────
+Theme Variables
+────────────────────────────────────────────────────────── */
+:root {
+  --bg: #ffffff;
+  --text: #000000;
+  --table-bg: #f9f9f9;
+  --table-border: #ccc;
+}
+
+body.dark {
+  --bg: #1f1f1f;
+  --text: #f1f1f1;
+  --table-bg: #2a2a2a;
+  --table-border: #444;
+}
+
+/* ────────────────────────────────────────────────────────
+Base Layout and Typography
+────────────────────────────────────────────────────────── */
+body {
+  font-family: Arial, sans-serif;
+  margin: 1rem;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+h1 {
+  margin: 0;
+}
+
+/* ────────────────────────────────────────────────────────
+Header and Layout Blocks
+────────────────────────────────────────────────────────── */
+.logo {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+  margin-right: 10px;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.description {
+  padding: 20px;
+  background-color: #f4f4f4;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.description p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.description p:first-child {
+  font-weight: bold;
+}
+
+/* ────────────────────────────────────────────────────────
+Form Elements & Buttons
+────────────────────────────────────────────────────────── */
+input, select, button {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+/* ────────────────────────────────────────────────────────
+Table Styling
+────────────────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--table-bg);
+  table-layout: auto;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+th, td {
+  border: 1px solid var(--table-border);
+  padding: 0.5rem;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+#kevTable th:nth-child(1),
+#kevTable td:nth-child(1) {
+  min-width: 70px;
+  max-width: 100px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+#kevTable th:nth-child(9),
+#kevTable td:nth-child(9) {
+  max-width: 180px;
+  word-break: break-word;
+}
+
+#kevTable th:nth-child(10),
+#kevTable td:nth-child(10) {
+  min-width: 200px;
+}
+
+th {
+  cursor: pointer;
+  background-color: var(--table-border);
+}
+
+.overdue {
+  color: red;
+  font-weight: bold;
+}
+
+.required-action {
+  max-height: 3.5em; /* About 2 lines */
+  overflow: hidden;
+  position: relative;
+  transition: max-height 0.3s ease;
+}
+
+.required-action.expanded {
+  max-height: none;
+}
+
+.toggle-link {
+  color: #007bff;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 0.85rem;
+}
+
+/* ────────────────────────────────────────────────────────
+Vendor and Product Display (NEW)
+────────────────────────────────────────────────────────── */
+.vendor-name {
+  font-weight: 600;
+  color: #444;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.product-name {
+  font-size: 0.85rem;
+  color: #222;
+  margin-top: 2px;
+}
+
+/* ────────────────────────────────────────────────────────
+Dark Mode Toggle
+────────────────────────────────────────────────────────── */
+.dark-mode-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.dark-mode-switch i {
+  font-size: 20px;
+  color: var(--text);
+  transition: color 0.3s;
+}
+
+body.dark .dark-mode-switch i {
+  color: yellow;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* ────────────────────────────────────────────────────────
+Legend Box & Toggle Button
+────────────────────────────────────────────────────────── */
+.key-toggle {
+  margin-bottom: 1rem;
+}
+
+#toggleLegend {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.key {
+  padding: 15px 20px;
+  background-color: #eef3f8;
+  border-left: 5px solid #2196F3;
+  border-radius: 6px;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+body.dark .key {
+  background-color: #2b2b2b;
+  color: #f1f1f1;
+  border-left-color: #64b5f6;
+}
+
+.key.hidden {
+  display: none;
+}
+
+.key li {
+  margin-bottom: 5px;
+}
+
+.tooltip-icon {
+  font-size: 0.85rem;
+  cursor: help;
+  margin-left: 4px;
+}
+
+/* ────────────────────────────────────────────────────────
+ Pill Labels & Sorting Arrows
+────────────────────────────────────────────────────────── */
+.kev-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+  background-color: #d9534f;
+  border-radius: 12px;
+  vertical-align: middle;
+}
+
+body.dark .kev-pill {
+  background-color: #ff5f5f;
+}
+
+.sort-indicator {
+  margin-left: 4px;
+  font-size: 0.8em;
+  color: #999;
+  transition: color 0.3s;
+}
+
+body.dark .sort-indicator {
+  color: #ccc;
+}
+
+/* ────────────────────────────────────────────────────────
+Attack Vector Column Styling
+────────────────────────────────────────────────────────── */
+td.attack-vector {
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: normal;
+  word-break: break-word;
+  color: #333;
+}
+
+#kevTable th:nth-child(9),
+#kevTable td:nth-child(9) {
+  min-width: 85px;
+}
+
+.desc-content {
+  max-height: 3em;
+  overflow: hidden;
+  display: block;
+}
+
+.desc-content.expanded {
+  max-height: none;
+}
+
+.attack-content {
+  max-height: 2.5em;
+  overflow: hidden;
+}
+
+.attack-content.expanded {
+  max-height: none;
+}
+
+body.dark td.attack-vector {
+  color: #ddd;
+}

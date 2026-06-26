@@ -1,0 +1,17 @@
+# Large/generated feed inputs
+nvd_data.json
+feed/nvd_data.json
+cves_archive.json
+feed/cves_archive.json
+
+# Temporary workflow folders
+temp_dashboard/
+tmp/
+temp/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS/editor files
+.DS_Store
