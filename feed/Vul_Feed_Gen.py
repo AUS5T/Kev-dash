@@ -9,6 +9,15 @@ from feedgen.feed import FeedGenerator
 from collections import Counter
 
 ARCHIVE_FILE = "cves_archive.json"
+KEV_OUTPUT_FILE = "kev_enriched.json"
+COMBINED_OUTPUT_FILE = "combined_enriched.json"
+CACHED_NVD_FIELDS = (
+    "cvssScore",
+    "cvssSeverity",
+    "cvssVector",
+    "cvssVersion",
+    "description",
+)
 
 # Correct v2 endpoint: plural `cves` and query param `cveId`
 NVD_LOOKUP_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
@@ -52,7 +61,7 @@ def load_epss_targeted(cve_ids):
     try:
         with requests.Session() as s:
             for chunk in chunked(list(set(cve_ids)), 200):
-                params = {"cve": chunk[0]}
+                params = {"cve": ",".join(chunk)}
                 r = s.get(base, params=params, timeout=30)
                 time.sleep(0.2)
                 r.raise_for_status()
@@ -84,6 +93,50 @@ def load_local_nvd_data():
     except Exception as e:
         print(f"Error loading NVD JSON file: {e}")
         return []
+
+def load_existing_kev_cache():
+    try:
+        with open(KEV_OUTPUT_FILE, "r") as f:
+            existing = json.load(f)
+    except FileNotFoundError:
+        print(f"No existing {KEV_OUTPUT_FILE} cache found.")
+        return {}
+    except Exception as e:
+        print(f"Error loading {KEV_OUTPUT_FILE} cache: {e}")
+        return {}
+
+    cache = {
+        item.get("cveID"): item
+        for item in existing
+        if isinstance(item, dict) and item.get("cveID")
+    }
+    print(f"Loaded {len(cache)} cached KEV records from {KEV_OUTPUT_FILE}.")
+    return cache
+
+def has_cached_nvd_enrichment(cached):
+    if not cached:
+        return False
+
+    cvss_score = cached.get("cvssScore")
+    description = cached.get("description")
+    has_cvss = cvss_score not in (None, "", "N/A") and "<a " not in str(cvss_score)
+    has_description = description not in (None, "", "N/A")
+    return has_cvss or has_description
+
+def get_cached_nvd_enrichment(cached):
+    cached_fields = {
+        field: cached.get(field, "N/A")
+        for field in CACHED_NVD_FIELDS
+    }
+    return {
+        "cvss": {
+            "cvssScore": cached_fields["cvssScore"],
+            "cvssSeverity": cached_fields["cvssSeverity"],
+            "cvssVector": cached_fields["cvssVector"],
+            "cvssVersion": cached_fields["cvssVersion"],
+        },
+        "description": cached_fields["description"],
+    }
 
 def extract_cvss_data(metrics):
     versions_priority = [
@@ -177,7 +230,7 @@ fetch_cvss_from_nvd_api.budget = FALLBACK_BUDGET
 
 # ---------- Enrichment and output ----------
 
-def enrich_kev_with_cvss(kev_entries, nvd_data, epss_map):
+def enrich_kev_with_cvss(kev_entries, nvd_data, epss_map, kev_cache):
     enriched = []
     nvd_map = {
         item["cve"].get("id", item["cve"].get("CVE_data_meta", {}).get("ID", ""))
@@ -189,22 +242,29 @@ def enrich_kev_with_cvss(kev_entries, nvd_data, epss_map):
     for kev in kev_entries:
         cve_id = kev.get("cveID")
         nvd_entry = nvd_map.get(cve_id)
+        cached = kev_cache.get(cve_id)
 
-        if nvd_entry:
+        if has_cached_nvd_enrichment(cached):
+            cached_enrichment = get_cached_nvd_enrichment(cached)
+            cvss = cached_enrichment["cvss"]
+            description = cached_enrichment["description"]
+        elif nvd_entry:
             metrics = nvd_entry.get("cve", {}).get("metrics", {})
             descriptions = nvd_entry.get("cve", {}).get("descriptions", [])
             cvss = extract_cvss_data(metrics)
+            description = next(
+                (d["value"] for d in descriptions if d.get("lang") == "en"), "N/A"
+            )
         else:
             cvss, descriptions = fetch_cvss_from_nvd_api(cve_id)
+            description = next(
+                (d["value"] for d in descriptions if d.get("lang") == "en"), "N/A"
+            )
 
         if cvss["cvssScore"] == "N/A":
             cvss["cvssScore"] = (
                 f'<a href="https://nvd.nist.gov/vuln/detail/{cve_id}" target="_blank">N/A</a>'
             )
-
-        description = next(
-            (d["value"] for d in descriptions if d.get("lang") == "en"), "N/A"
-        )
 
         epss_entry = epss_map.get(cve_id, {})
         epss_score = float(epss_entry.get("epss", 0)) if "epss" in epss_entry else "N/A"
@@ -242,9 +302,9 @@ def enrich_kev_with_cvss(kev_entries, nvd_data, epss_map):
     return enriched
 
 def save_enriched_kev(enriched):
-    with open("kev_enriched.json", "w") as f:
+    with open(KEV_OUTPUT_FILE, "w") as f:
         json.dump(enriched, f, indent=2)
-    print("Saved kev_enriched.json")
+    print(f"Saved {KEV_OUTPUT_FILE}")
 
     if os.getenv("SKIP_RSS", "0") == "1":
         print("Skipping RSS generation (SKIP_RSS=1).")
@@ -286,6 +346,7 @@ def update_combined_feed():
     kev = fetch_kev()
     if not kev:
         return
+    kev_cache = load_existing_kev_cache()
     nvd = load_local_nvd_data()
 
     kev_ids = [k.get("cveID") for k in kev if k.get("cveID")]
@@ -304,12 +365,12 @@ def update_combined_feed():
 
     audit_cvss_versions(nvd)
 
-    enriched = enrich_kev_with_cvss(kev, nvd, epss)
+    enriched = enrich_kev_with_cvss(kev, nvd, epss, kev_cache)
     save_enriched_kev(enriched)
 
-    with open("combined_enriched.json", "w") as f:
+    with open(COMBINED_OUTPUT_FILE, "w") as f:
         json.dump(enriched, f, indent=2)
-    print("Saved combined_enriched.json")
+    print(f"Saved {COMBINED_OUTPUT_FILE}")
 
 if __name__ == "__main__":
     update_combined_feed()
