@@ -29,9 +29,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r feed/requirements.txt
 
-      - name: Update NVD data
-        run: python -u feed/update_nvd_data.py
-
       - name: Generate vulnerability feeds
         run: python -u feed/Vul_Feed_Gen.py
 
