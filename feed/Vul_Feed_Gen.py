@@ -90,6 +90,9 @@ def load_local_nvd_data():
     try:
         with open("nvd_data.json", "r") as f:
             return json.load(f).get("vulnerabilities", [])
+    except FileNotFoundError:
+        print("Optional local nvd_data.json not found; using cache and exact-CVE NVD fallback.")
+        return []
     except Exception as e:
         print(f"Error loading NVD JSON file: {e}")
         return []
