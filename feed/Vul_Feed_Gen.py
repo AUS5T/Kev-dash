@@ -11,6 +11,7 @@ from collections import Counter
 ARCHIVE_FILE = "cves_archive.json"
 KEV_OUTPUT_FILE = "kev_enriched.json"
 COMBINED_OUTPUT_FILE = "combined_enriched.json"
+EPSS_CHUNK_SIZE = 75
 CACHED_NVD_FIELDS = (
     "cvssScore",
     "cvssSeverity",
@@ -60,12 +61,24 @@ def load_epss_targeted(cve_ids):
     base = "https://api.first.org/data/v1/epss"
     try:
         with requests.Session() as s:
-            for chunk in chunked(list(set(cve_ids)), 200):
-                params = {"cve": ",".join(chunk)}
+            for chunk in chunked(list(set(cve_ids)), EPSS_CHUNK_SIZE):
+                cve_query = ",".join(chunk)
+                params = {"cve": cve_query, "limit": len(chunk)}
+                print(
+                    f"Requesting EPSS for {len(chunk)} CVEs "
+                    f"(query length: {len(cve_query)} chars)..."
+                )
                 r = s.get(base, params=params, timeout=30)
                 time.sleep(0.2)
                 r.raise_for_status()
-                for row in r.json().get("data", []):
+                rows = r.json().get("data", [])
+                print(f"Received {len(rows)} EPSS rows for this chunk.")
+                if len(rows) < len(chunk) / 2:
+                    print(
+                        f"Warning: EPSS returned {len(rows)} rows for "
+                        f"{len(chunk)} requested CVEs."
+                    )
+                for row in rows:
                     epss_map[row["cve"]] = row
         print(f"Loaded EPSS scores for {len(epss_map)} CVEs (targeted).")
     except Exception as e:
