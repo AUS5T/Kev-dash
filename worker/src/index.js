@@ -27,10 +27,15 @@ export default {
       return handleSeedFromRepo(request, env);
     }
 
+    const publicFile = findSeedFile(url.pathname);
+    if (publicFile) {
+      return handlePublicR2Read(request, env, publicFile);
+    }
+
     return jsonResponse(
       {
         ok: true,
-        message: "Kev-dash R2 test Worker. Use /test-r2 for connectivity or /seed-from-repo with an admin token to seed R2.",
+        message: "Kev-dash R2 test Worker. Use /test-r2, /seed-from-repo, or one of the public data file paths.",
       },
       200,
     );
@@ -161,6 +166,60 @@ async function handleSeedFromRepo(request, env) {
     },
     200,
   );
+}
+
+async function handlePublicR2Read(request, env, file) {
+  if (request.method !== "GET") {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "Method not allowed. Use GET.",
+      },
+      405,
+    );
+  }
+
+  if (!env.KEV_DATA) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "Missing R2 binding: KEV_DATA",
+      },
+      500,
+    );
+  }
+
+  // Read-only testing endpoint. This only serves the explicitly allowed
+  // dashboard data objects from R2 and does not expose bucket listings.
+  const object = await env.KEV_DATA.get(file.key);
+
+  if (!object) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "R2 object not found.",
+        key: file.key,
+      },
+      404,
+    );
+  }
+
+  const headers = new Headers();
+  headers.set("content-type", file.contentType);
+  headers.set("cache-control", "no-store");
+  if (object.httpEtag) {
+    headers.set("etag", object.httpEtag);
+  }
+
+  return new Response(object.body, {
+    status: 200,
+    headers,
+  });
+}
+
+function findSeedFile(pathname) {
+  const key = pathname.startsWith("/") ? pathname.slice(1) : pathname;
+  return SEED_FILES.find((file) => file.key === key) || null;
 }
 
 function requireAdminToken(request, env) {
