@@ -15,12 +15,21 @@ function getAttackVector(cvssVector) {
 
 // Load dashboard data from the Worker/R2 endpoint.
 fetch('https://kev-dash-r2-test.austm999.workers.dev/kev_enriched.json')
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) {
+      throw new Error(`Data request failed with status ${res.status}`);
+    }
+    return res.json();
+  })
   .then(data => {
     fullData = normalizeDashboardData(data);
     tableData = fullData;
     updateSummaryMetrics(fullData);
     renderTable();
+  })
+  .catch(error => {
+    console.error('Error loading dashboard data:', error);
+    showDashboardLoadError();
   });
 
 function normalizeDashboardData(data) {
@@ -33,7 +42,19 @@ function normalizeDashboardData(data) {
 function setMetricText(id, value) {
   const element = document.getElementById(id);
   if (element) {
+    element.classList.remove("is-loading", "is-error");
+    element.removeAttribute("aria-label");
     element.textContent = Number(value || 0).toLocaleString();
+  }
+}
+
+function setMetricError(id) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.classList.remove("is-loading");
+    element.classList.add("is-error");
+    element.setAttribute("aria-label", "Metric unavailable");
+    element.textContent = "Error";
   }
 }
 
@@ -89,7 +110,26 @@ function updateRecordCount() {
   const recordCount = document.getElementById("recordCount");
   if (recordCount) {
     const count = Array.isArray(tableData) ? tableData.length : 0;
+    recordCount.classList.remove("is-loading", "is-error");
     recordCount.textContent = `${count.toLocaleString()} ${count === 1 ? "record" : "records"}`;
+  }
+}
+
+function showDashboardLoadError() {
+  [
+    "metricTotal",
+    "metricCritical",
+    "metricHigh",
+    "metricNetwork",
+    "metricRansomware",
+    "metricRecent",
+  ].forEach(setMetricError);
+
+  const recordCount = document.getElementById("recordCount");
+  if (recordCount) {
+    recordCount.classList.remove("is-loading");
+    recordCount.classList.add("is-error");
+    recordCount.textContent = "Data unavailable";
   }
 }
 
