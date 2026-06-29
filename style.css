@@ -35,6 +35,8 @@ Theme Variables
   --table-row-hover: var(--hover);
   --input-bg: #fbfdff;
   --focus-ring: 0 0 0 3px rgba(13, 111, 143, 0.18);
+  --skeleton-base: #dbe5ef;
+  --skeleton-highlight: #f4f8fb;
 }
 
 body.dark {
@@ -71,6 +73,8 @@ body.dark {
   --table-row-hover: var(--hover);
   --input-bg: #0d1722;
   --focus-ring: 0 0 0 3px rgba(56, 183, 199, 0.2);
+  --skeleton-base: #203447;
+  --skeleton-highlight: #2d465c;
 }
 
 /* ────────────────────────────────────────────────────────
@@ -133,21 +137,20 @@ code {
 Header and Layout Blocks
 ────────────────────────────────────────────────────────── */
 .logo {
-  width: 124px;
-  height: auto;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  margin-right: 2px;
 }
 
 .header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: 4px clamp(108px, 9vw, 142px) minmax(280px, 1fr);
   align-items: center;
-  gap: 16px;
+  column-gap: 16px;
   width: 100%;
   margin: 0 0 18px;
-  padding: 24px 26px;
+  padding: 18px 22px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background:
@@ -157,46 +160,50 @@ Header and Layout Blocks
 
 .header::before {
   width: 4px;
-  height: 42px;
+  height: 86px;
   border-radius: 999px;
   background: var(--accent);
   content: "";
 }
 
-.header-copy {
-  flex: 1 1 420px;
-  min-width: 240px;
+.header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(108px, 9vw, 142px);
+  height: 88px;
+  max-height: 96px;
 }
 
-.eyebrow {
-  margin: 0 0 7px;
-  color: var(--accent);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  line-height: 1.2;
-  text-transform: uppercase;
+.header-copy {
+  align-self: center;
+  min-width: 0;
+}
+
+.header-copy h1 {
+  margin: 0;
+  line-height: 1.05;
 }
 
 .subtitle {
   max-width: 780px;
-  margin: 9px 0 0;
+  margin: 5px 0 0;
   color: var(--muted-text);
   font-size: 0.98rem;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .summary-card {
   position: relative;
-  min-height: 112px;
-  padding: 18px;
+  min-height: 104px;
+  padding: 16px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -234,7 +241,7 @@ Header and Layout Blocks
 
 .summary-card span {
   display: block;
-  min-height: 34px;
+  min-height: 32px;
   color: var(--muted-text);
   font-size: 0.8rem;
   font-weight: 750;
@@ -245,12 +252,51 @@ Header and Layout Blocks
 
 .summary-card strong {
   display: block;
-  margin-top: 12px;
+  margin-top: 10px;
   color: var(--text);
   font-size: clamp(1.65rem, 3vw, 2.35rem);
   font-weight: 780;
   letter-spacing: 0;
   line-height: 1;
+}
+
+.metric-value.is-loading {
+  width: min(92px, 80%);
+}
+
+.loading-skeleton {
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--skeleton-base) 0%, var(--skeleton-highlight) 48%, var(--skeleton-base) 100%);
+  background-size: 220% 100%;
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+}
+
+.metric-skeleton {
+  width: 100%;
+  height: 32px;
+}
+
+.record-skeleton {
+  width: 54px;
+  height: 10px;
+}
+
+.metric-value.is-error {
+  color: var(--danger);
+  font-size: 1.15rem;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
 }
 
 .toolbar-panel,
@@ -289,6 +335,9 @@ Header and Layout Blocks
 }
 
 .record-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex: 0 0 auto;
   padding: 0.3rem 0.55rem;
   border: 1px solid var(--border);
@@ -297,6 +346,16 @@ Header and Layout Blocks
   color: var(--muted-text);
   font-size: 0.78rem;
   font-weight: 750;
+}
+
+.record-count.is-loading {
+  min-width: 148px;
+}
+
+.record-count.is-error {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .controls {
@@ -878,7 +937,7 @@ Pagination and Footer
 
 #last-updated {
   display: block;
-  margin: 12px 0 0;
+  margin: 5px 0 0;
   color: var(--muted-text);
   font-size: 0.86rem;
   text-align: left;
@@ -891,8 +950,19 @@ Pagination and Footer
   }
 
   .header {
-    align-items: flex-start;
-    padding: 16px;
+    grid-template-columns: 4px minmax(84px, 104px) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    padding: 14px;
+  }
+
+  .header::before {
+    height: 78px;
+  }
+
+  .header-logo {
+    width: min(104px, 24vw);
+    height: 72px;
   }
 
   .summary-grid {
@@ -900,8 +970,8 @@ Pagination and Footer
   }
 
   .summary-card {
-    min-height: 104px;
-    padding: 15px;
+    min-height: 98px;
+    padding: 14px;
   }
 
   .section-heading {
@@ -911,7 +981,8 @@ Pagination and Footer
   }
 
   .logo {
-    width: 88px;
+    width: 100%;
+    height: 100%;
   }
 
   .controls {
@@ -951,5 +1022,12 @@ Pagination and Footer
 @media (min-width: 761px) and (max-width: 1180px) {
   .summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-skeleton {
+    animation: none;
+    background: var(--skeleton-base);
   }
 }

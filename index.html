@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KEV+ Dashboard</title>
+  <title>PatchSignal Dashboard</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
@@ -11,10 +11,12 @@
 <body>
   <main class="dashboard-shell">
     <header class="header">
-      <img src="assets/images/logo.png" alt="Logo" class="logo" />
+      <div class="header-logo">
+        <img src="/assets/images/patchsignal-icon.png" alt="PatchSignal logo" class="logo" />
+      </div>
       <div class="header-copy">
-        <h1>Known Exploited Vulnerabilities +</h1>
-        <p class="subtitle">Prioritized KEV intelligence enriched with CVSS, EPSS, exploitation context, and remediation timing.</p>
+        <h1>PatchSignal</h1>
+        <p class="subtitle">Known-exploitation vulnerability intelligence enriched with CVSS, EPSS, and remediation context.</p>
         <p id="last-updated">
           Last updated: <span id="timestamp">Loading...</span>
         </p>
@@ -24,40 +26,52 @@
     <section class="summary-grid" aria-label="Dashboard summary">
       <article class="summary-card">
         <span>Total KEVs</span>
-        <strong id="metricTotal">--</strong>
+        <strong id="metricTotal" class="metric-value is-loading" aria-label="Loading Total KEVs">
+          <span class="loading-skeleton metric-skeleton"></span>
+        </strong>
       </article>
       <article class="summary-card critical">
         <span>Critical</span>
-        <strong id="metricCritical">--</strong>
+        <strong id="metricCritical" class="metric-value is-loading" aria-label="Loading Critical">
+          <span class="loading-skeleton metric-skeleton"></span>
+        </strong>
       </article>
       <article class="summary-card high">
         <span>High</span>
-        <strong id="metricHigh">--</strong>
+        <strong id="metricHigh" class="metric-value is-loading" aria-label="Loading High">
+          <span class="loading-skeleton metric-skeleton"></span>
+        </strong>
       </article>
       <article class="summary-card network">
         <span>Network exploitable</span>
-        <strong id="metricNetwork">--</strong>
+        <strong id="metricNetwork" class="metric-value is-loading" aria-label="Loading Network Exploitable">
+          <span class="loading-skeleton metric-skeleton"></span>
+        </strong>
       </article>
       <article class="summary-card ransomware">
         <span>Ransomware-linked</span>
-        <strong id="metricRansomware">--</strong>
+        <strong id="metricRansomware" class="metric-value is-loading" aria-label="Loading Ransomware-linked">
+          <span class="loading-skeleton metric-skeleton"></span>
+        </strong>
       </article>
       <article class="summary-card recent">
         <span>Recently added</span>
-        <strong id="metricRecent">--</strong>
+        <strong id="metricRecent" class="metric-value is-loading" aria-label="Loading Recently Added">
+          <span class="loading-skeleton metric-skeleton"></span>
+        </strong>
       </article>
     </section>
 
     <div class="description">
       <p>
-        KEV+ pulls data from multiple sources including the National Vulnerability Database (NVD) via NIST, the Known Exploited Vulnerabilities (KEV) catalog via CISA, and Exploit Prediction Scoring System (EPSS) via FIRST.
+        PatchSignal pulls data from multiple sources including the National Vulnerability Database (NVD) via NIST, the Known Exploited Vulnerabilities (KEV) catalog via CISA, and Exploit Prediction Scoring System (EPSS) via FIRST.
       </p>
       <p>
         Each entry is enriched with key details such as CVSS severity scores, EPSS exploitation likelihood, required remediation actions, and due dates.
         The goal is to quickly prioritize and respond to threats that are actively being exploited in the wild.
       </p>
       <p>
-        KEV+ is an independent enrichment project intended for research and personal use and is not affiliated with or endorsed by CISA.
+        PatchSignal is an independent enrichment project intended for research and personal use and is not affiliated with or endorsed by CISA.
       </p>
     </div>
 
@@ -130,7 +144,10 @@
     <section class="data-grid-panel">
       <div class="section-heading grid-heading">
         <h2>Known Exploited Vulnerabilities</h2>
-        <span class="record-count" id="recordCount">Loading records...</span>
+        <span class="record-count is-loading" id="recordCount">
+          <span class="loading-skeleton record-skeleton"></span>
+          <span>Loading records</span>
+        </span>
       </div>
 
       <div class="table-container">
