@@ -145,7 +145,7 @@ Header and Layout Blocks
 
 .header {
   display: grid;
-  grid-template-columns: 4px clamp(108px, 9vw, 142px) minmax(280px, 1fr);
+  grid-template-columns: 4px clamp(108px, 9vw, 142px) minmax(280px, 1fr) auto;
   align-items: center;
   column-gap: 16px;
   width: 100%;
@@ -191,6 +191,97 @@ Header and Layout Blocks
   color: var(--muted-text);
   font-size: 0.98rem;
   line-height: 1.45;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+
+.site-nav a {
+  padding: 0.45rem 0.65rem;
+  border-radius: 7px;
+  color: var(--muted-text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.site-nav a:hover {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  text-decoration: none;
+}
+
+.site-nav a[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.content-shell {
+  max-width: 1100px;
+}
+
+.content-card {
+  margin-bottom: 16px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, var(--surface-elevated), var(--surface));
+  box-shadow: var(--shadow-subtle);
+}
+
+.content-card h2 {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.content-card p {
+  max-width: 820px;
+  margin: 0;
+  color: var(--muted-text);
+  line-height: 1.6;
+}
+
+.content-card p + p {
+  margin-top: 0.75rem;
+}
+
+.content-card ul,
+.content-card ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--muted-text);
+}
+
+.content-card li {
+  margin-bottom: 0.45rem;
+}
+
+.content-card li:last-child {
+  margin-bottom: 0;
+}
+
+.source-list li {
+  margin-bottom: 1rem;
+}
+
+.source-list strong {
+  color: var(--text);
+}
+
+.source-list p {
+  margin-top: 0.25rem;
 }
 
 .summary-grid {
@@ -952,6 +1043,7 @@ Pagination and Footer
   .header {
     grid-template-columns: 4px minmax(84px, 104px) minmax(0, 1fr);
     align-items: center;
+    row-gap: 12px;
     column-gap: 12px;
     padding: 14px;
   }
@@ -963,6 +1055,17 @@ Pagination and Footer
   .header-logo {
     width: min(104px, 24vw);
     height: 72px;
+  }
+
+  .site-nav {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .content-card {
+    padding: 18px;
   }
 
   .summary-grid {

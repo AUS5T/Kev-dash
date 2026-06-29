@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PatchSignal Data Sources</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="dashboard-shell content-shell">
+    <header class="header">
+      <div class="header-logo">
+        <img src="/assets/images/patchsignal-icon.png" alt="PatchSignal logo" class="logo" />
+      </div>
+      <div class="header-copy">
+        <h1>Data Sources</h1>
+        <p class="subtitle">Public vulnerability data combined into a focused triage view.</p>
+      </div>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="index.html">Dashboard</a>
+        <a href="about.html">About</a>
+        <a href="sources.html" aria-current="page">Data Sources</a>
+      </nav>
+    </header>
+
+    <section class="content-card">
+      <h2>Source Overview</h2>
+      <p>
+        PatchSignal combines vulnerability data from multiple public sources to provide a more useful triage view.
+      </p>
+    </section>
+
+    <section class="content-card source-list">
+      <h2>Data Sources</h2>
+      <ol>
+        <li>
+          <strong>CISA Known Exploited Vulnerabilities catalog</strong>
+          <p>Used as the primary source for vulnerabilities known to be exploited. Provides CVE IDs, affected vendors/products, dates added, due dates, required actions, and ransomware-use indicators when available.</p>
+        </li>
+        <li>
+          <strong>National Vulnerability Database via NIST</strong>
+          <p>Used for CVSS severity, scoring, vectors, and vulnerability descriptions when available.</p>
+        </li>
+        <li>
+          <strong>Exploit Prediction Scoring System via FIRST</strong>
+          <p>Used for EPSS scores and percentiles to estimate exploitation likelihood.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="content-card">
+      <h2>Disclaimer</h2>
+      <p>
+        Source data belongs to the respective source providers. PatchSignal enriches and presents the data for research and personal workflow use. PatchSignal is not affiliated with or endorsed by CISA, NIST, or FIRST.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

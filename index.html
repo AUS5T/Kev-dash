@@ -16,11 +16,16 @@
       </div>
       <div class="header-copy">
         <h1>PatchSignal</h1>
-        <p class="subtitle">Known-exploitation vulnerability intelligence enriched with CVSS, EPSS, and remediation context.</p>
+        <p class="subtitle">Prioritize exploited vulnerabilities with enriched severity, likelihood, and remediation context.</p>
         <p id="last-updated">
           Last updated: <span id="timestamp">Loading...</span>
         </p>
       </div>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="index.html" aria-current="page">Dashboard</a>
+        <a href="about.html">About</a>
+        <a href="sources.html">Data Sources</a>
+      </nav>
     </header>
 
     <section class="summary-grid" aria-label="Dashboard summary">
@@ -61,19 +66,6 @@
         </strong>
       </article>
     </section>
-
-    <div class="description">
-      <p>
-        PatchSignal pulls data from multiple sources including the National Vulnerability Database (NVD) via NIST, the Known Exploited Vulnerabilities (KEV) catalog via CISA, and Exploit Prediction Scoring System (EPSS) via FIRST.
-      </p>
-      <p>
-        Each entry is enriched with key details such as CVSS severity scores, EPSS exploitation likelihood, required remediation actions, and due dates.
-        The goal is to quickly prioritize and respond to threats that are actively being exploited in the wild.
-      </p>
-      <p>
-        PatchSignal is an independent enrichment project intended for research and personal use and is not affiliated with or endorsed by CISA.
-      </p>
-    </div>
 
     <div class="key-toggle">
       <button id="toggleLegend">📘 Legend: What do these values mean?</button>
