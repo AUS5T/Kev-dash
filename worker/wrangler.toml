@@ -1,0 +1,10 @@
+name = "kev-dash-r2-test"
+main = "src/index.js"
+compatibility_date = "2026-06-29"
+
+# Connectivity test only.
+# This binding points at the R2 bucket that will eventually hold generated data.
+# The current dashboard continues to use the repo-served JSON files.
+[[r2_buckets]]
+binding = "KEV_DATA"
+bucket_name = "kev-dash-data"
