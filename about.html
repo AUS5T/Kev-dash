@@ -4,7 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About PatchSignal</title>
+  <script>
+    try {
+      if (localStorage.getItem("patchsignal-theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    } catch (error) {}
+  </script>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 
 <body>
@@ -21,6 +29,13 @@
         <a href="index.html">Dashboard</a>
         <a href="about.html" aria-current="page">About</a>
         <a href="sources.html">Data Sources</a>
+        <label class="dark-mode-switch site-theme-switch" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i>
+          <span class="switch">
+            <input type="checkbox" class="theme-toggle" aria-label="Toggle dark mode">
+            <span class="slider"></span>
+          </span>
+        </label>
       </nav>
     </header>
 
@@ -52,5 +67,6 @@
       </ul>
     </section>
   </main>
+  <script src="script.js"></script>
 </body>
 </html>

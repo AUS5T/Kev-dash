@@ -5,6 +5,89 @@ let tableData = [];
 let fullData = [];
 let currentPage = 1;
 const pageSize = 25;
+const themeStorageKey = "patchsignal-theme";
+
+initTheme();
+initDashboard();
+
+function initTheme() {
+  const savedTheme = getSavedTheme();
+  const useDark = savedTheme === "dark";
+
+  document.documentElement.classList.toggle("dark", useDark);
+  document.body.classList.toggle("dark", useDark);
+
+  document.querySelectorAll(".theme-toggle").forEach(toggle => {
+    toggle.checked = useDark;
+    toggle.addEventListener("change", e => {
+      const darkEnabled = e.target.checked;
+      saveTheme(darkEnabled ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", darkEnabled);
+      document.body.classList.toggle("dark", darkEnabled);
+
+      document.querySelectorAll(".theme-toggle").forEach(otherToggle => {
+        otherToggle.checked = darkEnabled;
+      });
+    });
+  });
+}
+
+function getSavedTheme() {
+  try {
+    return localStorage.getItem(themeStorageKey);
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveTheme(theme) {
+  try {
+    localStorage.setItem(themeStorageKey, theme);
+  } catch (error) {}
+}
+
+function initDashboard() {
+  if (!document.getElementById("kevTable")) return;
+
+  loadDashboardData();
+
+  document.getElementById("searchBox").addEventListener("input", e => {
+    const search = e.target.value.toLowerCase();
+    const filtered = fullData.filter(item =>
+      fieldText(item.cveID).toLowerCase().includes(search) ||
+      fieldText(item.product).toLowerCase().includes(search) ||
+      fieldText(item.vendor).toLowerCase().includes(search)
+    );
+    tableData = filtered;
+    currentPage = 1;
+    renderTable();
+  });
+
+  document.getElementById("severityFilter").addEventListener("change", applyFilters);
+  document.getElementById("dateFilter").addEventListener("change", applyFilters);
+  document.getElementById("attackVectorFilter").addEventListener("change", applyFilters);
+
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable();
+      document.getElementById("pagination").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+
+  document.getElementById("nextPage").addEventListener("click", () => {
+    const totalPages = Math.max(1, Math.ceil(tableData.length / pageSize));
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTable();
+      document.getElementById("pagination").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+
+  document.getElementById("toggleLegend").addEventListener("click", () => {
+    document.getElementById("legendBox").classList.toggle("hidden");
+  });
+}
 
 function getAttackVector(cvssVector) {
   const vector = fieldText(cvssVector);
@@ -13,24 +96,26 @@ function getAttackVector(cvssVector) {
   return match ? match[1] : null;
 }
 
-// Load dashboard data from the Worker/R2 endpoint.
-fetch('https://kev-dash-r2-test.austm999.workers.dev/kev_enriched.json')
-  .then(res => {
-    if (!res.ok) {
-      throw new Error(`Data request failed with status ${res.status}`);
-    }
-    return res.json();
-  })
-  .then(data => {
-    fullData = normalizeDashboardData(data);
-    tableData = fullData;
-    updateSummaryMetrics(fullData);
-    renderTable();
-  })
-  .catch(error => {
-    console.error('Error loading dashboard data:', error);
-    showDashboardLoadError();
-  });
+function loadDashboardData() {
+  // Load dashboard data from the Worker/R2 endpoint.
+  fetch('https://kev-dash-r2-test.austm999.workers.dev/kev_enriched.json')
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`Data request failed with status ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      fullData = normalizeDashboardData(data);
+      tableData = fullData;
+      updateSummaryMetrics(fullData);
+      renderTable();
+    })
+    .catch(error => {
+      console.error('Error loading dashboard data:', error);
+      showDashboardLoadError();
+    });
+}
 
 function normalizeDashboardData(data) {
   if (Array.isArray(data)) return data;
@@ -206,22 +291,6 @@ function renderTable() {
   document.getElementById("nextPage").disabled = currentPage === totalPages;
 }
 
-document.getElementById("searchBox").addEventListener("input", e => {
-  const search = e.target.value.toLowerCase();
-  const filtered = fullData.filter(item =>
-    fieldText(item.cveID).toLowerCase().includes(search) ||
-    fieldText(item.product).toLowerCase().includes(search) ||
-    fieldText(item.vendor).toLowerCase().includes(search)
-  );
-  tableData = filtered;
-  currentPage = 1;
-  renderTable();
-});
-
-document.getElementById("severityFilter").addEventListener("change", applyFilters);
-document.getElementById("dateFilter").addEventListener("change", applyFilters);
-document.getElementById("attackVectorFilter").addEventListener("change", applyFilters);
-
 function applyFilters() {
   const severityValue = document.getElementById("severityFilter").value;
   const dateValue = document.getElementById("dateFilter").value;
@@ -319,31 +388,6 @@ function exportToCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
-
-document.getElementById("darkModeToggle").addEventListener("change", e => {
-  document.body.classList.toggle("dark", e.target.checked);
-});
-
-document.getElementById("prevPage").addEventListener("click", () => {
-  if (currentPage > 1) {
-    currentPage--;
-    renderTable();
-    document.getElementById("pagination").scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-});
-
-document.getElementById("nextPage").addEventListener("click", () => {
-  const totalPages = Math.max(1, Math.ceil(tableData.length / pageSize));
-  if (currentPage < totalPages) {
-    currentPage++;
-    renderTable();
-    document.getElementById("pagination").scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-});
-
-document.getElementById("toggleLegend").addEventListener("click", () => {
-  document.getElementById("legendBox").classList.toggle("hidden");
-});
 
 document.addEventListener("click", function (e) {
   if (e.target.classList.contains("toggle-link")) {

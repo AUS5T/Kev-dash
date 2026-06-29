@@ -39,6 +39,7 @@ Theme Variables
   --skeleton-highlight: #f4f8fb;
 }
 
+html.dark,
 body.dark {
   color-scheme: dark;
 
@@ -223,6 +224,13 @@ Header and Layout Blocks
 .site-nav a[aria-current="page"] {
   background: var(--accent-soft);
   color: var(--accent-hover);
+}
+
+.site-nav .site-theme-switch {
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
 }
 
 .content-shell {
@@ -815,6 +823,7 @@ Dark Mode Toggle
   font-size: 18px;
 }
 
+html.dark .dark-mode-switch i,
 body.dark .dark-mode-switch i {
   color: var(--accent);
 }
@@ -996,6 +1005,7 @@ td.attack-vector {
   max-height: none;
 }
 
+html.dark td.attack-vector,
 body.dark td.attack-vector {
   color: var(--muted-text);
 }
@@ -1110,6 +1120,12 @@ Pagination and Footer
     justify-content: flex-start;
     width: 100%;
     margin-left: 0;
+  }
+
+  .site-nav .site-theme-switch {
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: 4px;
   }
 
   th,
