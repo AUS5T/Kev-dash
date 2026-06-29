@@ -1,23 +1,12 @@
-const TEST_OBJECT_KEY = "test-r2.txt";
-const PAGES_ORIGIN = "https://kev-dash.pages.dev";
-const ALLOWED_CORS_ORIGINS = new Set([
-  "https://kev-dash.pages.dev",
-  "http://localhost:8000",
-]);
-const SEED_FILES = [
-  {
-    key: "kev_enriched.json",
-    contentType: "application/json; charset=utf-8",
-  },
-  {
-    key: "combined_enriched.json",
-    contentType: "application/json; charset=utf-8",
-  },
-  {
-    key: "last_updated.txt",
-    contentType: "text/plain; charset=utf-8",
-  },
-];
+import { DATA_FILES, PAGES_ORIGIN, TEST_OBJECT_KEY } from "./config.js";
+import {
+  applyCorsHeaders,
+  handlePublicCorsPreflight,
+  jsonResponse,
+  jsonResponseWithCors,
+  requireAdminToken,
+} from "./http.js";
+import { getR2Object, hasKevDataBinding, putR2Object } from "./r2.js";
 
 export default {
   async fetch(request, env) {
@@ -31,7 +20,7 @@ export default {
       return handleSeedFromRepo(request, env);
     }
 
-    const publicFile = findSeedFile(url.pathname);
+    const publicFile = findDataFile(url.pathname);
     if (publicFile) {
       return handlePublicR2Read(request, env, publicFile);
     }
@@ -47,7 +36,7 @@ export default {
 };
 
 async function handleTestR2(env) {
-  if (!env.KEV_DATA) {
+  if (!hasKevDataBinding(env)) {
     return jsonResponse(
       {
         ok: false,
@@ -62,13 +51,9 @@ async function handleTestR2(env) {
   const writtenAt = new Date().toISOString();
   const body = `Kev-dash R2 connectivity test\nwritten_at=${writtenAt}\n`;
 
-  await env.KEV_DATA.put(TEST_OBJECT_KEY, body, {
-    httpMetadata: {
-      contentType: "text/plain; charset=utf-8",
-    },
-  });
+  await putR2Object(env, TEST_OBJECT_KEY, body, "text/plain; charset=utf-8");
 
-  const object = await env.KEV_DATA.get(TEST_OBJECT_KEY);
+  const object = await getR2Object(env, TEST_OBJECT_KEY);
 
   if (!object) {
     return jsonResponse(
@@ -109,7 +94,7 @@ async function handleSeedFromRepo(request, env) {
     return authError;
   }
 
-  if (!env.KEV_DATA) {
+  if (!hasKevDataBinding(env)) {
     return jsonResponse(
       {
         ok: false,
@@ -124,7 +109,7 @@ async function handleSeedFromRepo(request, env) {
   // It does not run cron, generate feeds, or call CISA/NVD/EPSS APIs.
   const seeded = [];
 
-  for (const file of SEED_FILES) {
+  for (const file of DATA_FILES) {
     const sourceUrl = `${PAGES_ORIGIN}/${file.key}`;
     const response = await fetch(sourceUrl, {
       headers: {
@@ -146,11 +131,7 @@ async function handleSeedFromRepo(request, env) {
 
     const body = await response.arrayBuffer();
 
-    await env.KEV_DATA.put(file.key, body, {
-      httpMetadata: {
-        contentType: file.contentType,
-      },
-    });
+    await putR2Object(env, file.key, body, file.contentType);
 
     seeded.push({
       key: file.key,
@@ -188,7 +169,7 @@ async function handlePublicR2Read(request, env, file) {
     );
   }
 
-  if (!env.KEV_DATA) {
+  if (!hasKevDataBinding(env)) {
     return jsonResponseWithCors(
       request,
       {
@@ -201,7 +182,7 @@ async function handlePublicR2Read(request, env, file) {
 
   // Read-only testing endpoint. This only serves the explicitly allowed
   // dashboard data objects from R2 and does not expose bucket listings.
-  const object = await env.KEV_DATA.get(file.key);
+  const object = await getR2Object(env, file.key);
 
   if (!object) {
     return jsonResponseWithCors(
@@ -229,92 +210,7 @@ async function handlePublicR2Read(request, env, file) {
   });
 }
 
-function handlePublicCorsPreflight(request) {
-  const headers = new Headers();
-  headers.set("cache-control", "no-store");
-  applyCorsHeaders(request, headers);
-
-  if (!headers.has("access-control-allow-origin")) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: "CORS origin not allowed.",
-      },
-      403,
-    );
-  }
-
-  headers.set("access-control-allow-methods", "GET, OPTIONS");
-  headers.set("access-control-allow-headers", "content-type");
-  headers.set("access-control-max-age", "0");
-
-  return new Response(null, {
-    status: 204,
-    headers,
-  });
-}
-
-function jsonResponseWithCors(request, payload, status) {
-  const headers = new Headers();
-  headers.set("content-type", "application/json; charset=utf-8");
-  headers.set("cache-control", "no-store");
-  applyCorsHeaders(request, headers);
-
-  return new Response(JSON.stringify(payload, null, 2), {
-    status,
-    headers,
-  });
-}
-
-function applyCorsHeaders(request, headers) {
-  const origin = request.headers.get("origin");
-
-  if (!origin || !ALLOWED_CORS_ORIGINS.has(origin)) {
-    return;
-  }
-
-  headers.set("access-control-allow-origin", origin);
-  headers.set("vary", "Origin");
-}
-
-function findSeedFile(pathname) {
+function findDataFile(pathname) {
   const key = pathname.startsWith("/") ? pathname.slice(1) : pathname;
-  return SEED_FILES.find((file) => file.key === key) || null;
-}
-
-function requireAdminToken(request, env) {
-  if (!env.ADMIN_TOKEN) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: "Missing ADMIN_TOKEN secret.",
-      },
-      500,
-    );
-  }
-
-  const expected = `Bearer ${env.ADMIN_TOKEN}`;
-  const actual = request.headers.get("authorization") || "";
-
-  if (actual !== expected) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: "Unauthorized.",
-      },
-      401,
-    );
-  }
-
-  return null;
-}
-
-function jsonResponse(payload, status) {
-  return new Response(JSON.stringify(payload, null, 2), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-    },
-  });
+  return DATA_FILES.find((file) => file.key === key) || null;
 }
