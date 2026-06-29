@@ -8,7 +8,7 @@ compatibility_date = "2026-06-29"
 # Set ADMIN_TOKEN as a Wrangler/Cloudflare secret; do not store it in this file.
 
 [triggers]
-crons = ["0 */6 * * *"]
+crons = ["0 */3 * * *"]
 
 [[r2_buckets]]
 binding = "KEV_DATA"
