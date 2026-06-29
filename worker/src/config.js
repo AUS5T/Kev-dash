@@ -1,5 +1,7 @@
 export const TEST_OBJECT_KEY = "test-r2.txt";
 export const PAGES_ORIGIN = "https://kev-dash.pages.dev";
+export const CISA_KEV_URL =
+  "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json";
 export const ALLOWED_CORS_ORIGINS = new Set([
   "https://kev-dash.pages.dev",
   "http://localhost:8000",

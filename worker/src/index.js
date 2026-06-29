@@ -7,6 +7,7 @@ import {
   requireAdminToken,
 } from "./http.js";
 import { getR2Object, hasKevDataBinding, putR2Object } from "./r2.js";
+import { runUpdateFeedsReadOnlySkeleton } from "./updateFeeds.js";
 
 export default {
   async fetch(request, env) {
@@ -18,6 +19,10 @@ export default {
 
     if (url.pathname === "/seed-from-repo") {
       return handleSeedFromRepo(request, env);
+    }
+
+    if (url.pathname === "/admin/update-feeds") {
+      return handleUpdateFeeds(request, env);
     }
 
     const publicFile = findDataFile(url.pathname);
@@ -151,6 +156,26 @@ async function handleSeedFromRepo(request, env) {
     },
     200,
   );
+}
+
+async function handleUpdateFeeds(request, env) {
+  if (request.method !== "POST") {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "Method not allowed. Use POST.",
+      },
+      405,
+    );
+  }
+
+  const authError = requireAdminToken(request, env);
+  if (authError) {
+    return authError;
+  }
+
+  const result = await runUpdateFeedsReadOnlySkeleton(env);
+  return jsonResponse(result.body, result.status);
 }
 
 async function handlePublicR2Read(request, env, file) {
