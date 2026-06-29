@@ -9,129 +9,170 @@
 </head>
 
 <body>
-  <div class="header">
-    <img src="assets/images/logo.png" alt="Logo" class="logo" />
-    <h1>Known Exploited Vulnerabilities +</h1>
-  </div>
-  
-  <div class="description">
-    <p>
-      KEV+ pulls data from multiple sources including the National Vulnerability Database (NVD) via NIST, the Known Exploited Vulnerabilities (KEV) catalog via CISA, and Exploit Prediction Scoring System (EPSS) via FIRST.
-    </p>
-    <p>
-      Each entry is enriched with key details such as CVSS severity scores, EPSS exploitation likelihood, required remediation actions, and due dates. 
-      The goal is to quickly prioritize and respond to threats that are actively being exploited in the wild.
-    </p>
-    <p>
-      KEV+ is an independent enrichment project intended for research and personal use and is not affiliated with or endorsed by CISA.
-    </p>
-  </div>
+  <main class="dashboard-shell">
+    <header class="header">
+      <img src="assets/images/logo.png" alt="Logo" class="logo" />
+      <div class="header-copy">
+        <h1>Known Exploited Vulnerabilities +</h1>
+        <p class="subtitle">Prioritized KEV intelligence enriched with CVSS, EPSS, exploitation context, and remediation timing.</p>
+        <p id="last-updated">
+          Last updated: <span id="timestamp">Loading...</span>
+        </p>
+      </div>
+    </header>
 
-  <div class="key-toggle">
-    <button id="toggleLegend">📘 Legend: What do these values mean?</button>
-    <div id="legendBox" class="key hidden">
-      <ul>
-        <li><strong>CVSS Version:</strong> Shown in parentheses next to the CVSS score (e.g., 2.0, 3.1, 4.0).</li>
-        <li>
-          <strong>CVSS Vector:</strong> Hover over the CVSS score to see how the vulnerability is exploited (e.g., <code>AV:N/AC:L/PR:N/UI:N</code>).<br>
-          <a href="https://www.first.org/cvss/specification-document" target="_blank" rel="noopener noreferrer">CVSS Spec Guide</a>
-        </li>
-        <li><strong>CVE ID:</strong> Unique vulnerability ID (e.g., CVE-2024-12345).</li>
-        <li><strong>Vendor & Product:</strong> Each vulnerability lists the vendor above the affected software, system, or component.</li>
-        <li><strong>Severity:</strong> Based on CVSS. <strong>HIGH</strong> and <strong>CRITICAL</strong> are urgent.</li>
-        <li>
-          <strong>CVSS:</strong> Score from 0.0–10.0 indicating severity.<br>
-          — <strong>7.0+</strong> is high risk.<br>
-          — <strong>N/A</strong> means no NIST-assigned score yet; <strong>clickable</strong> to view third-party scores on NVD.
-        </li>
-        <li><strong>EPSS Score:</strong> Exploit likelihood (0.0–1.0). <strong>0.7+</strong> is high risk.</li>
-        <li><strong>EPSS %:</strong> Percentile rank for exploitation probability. <strong>90%+</strong> is critical.</li>
-        <li><strong>Date Added:</strong> When the CVE was added to CISA’s KEV list.</li>
-        <li><strong>Due Date:</strong> CISA’s mandated deadline for mitigation.</li>
-        <li><strong>Attack Vector:</strong> Shows the method of access (e.g., Network, Local). This is extracted from the CVSS vector string.</li>
-        <li><strong>Description:</strong> A short summary of the vulnerability from NVD.</li>
-      </ul>
+    <section class="summary-grid" aria-label="Dashboard summary">
+      <article class="summary-card">
+        <span>Total KEVs</span>
+        <strong id="metricTotal">--</strong>
+      </article>
+      <article class="summary-card critical">
+        <span>Critical</span>
+        <strong id="metricCritical">--</strong>
+      </article>
+      <article class="summary-card high">
+        <span>High</span>
+        <strong id="metricHigh">--</strong>
+      </article>
+      <article class="summary-card network">
+        <span>Network exploitable</span>
+        <strong id="metricNetwork">--</strong>
+      </article>
+      <article class="summary-card ransomware">
+        <span>Ransomware-linked</span>
+        <strong id="metricRansomware">--</strong>
+      </article>
+      <article class="summary-card recent">
+        <span>Recently added</span>
+        <strong id="metricRecent">--</strong>
+      </article>
+    </section>
+
+    <div class="description">
+      <p>
+        KEV+ pulls data from multiple sources including the National Vulnerability Database (NVD) via NIST, the Known Exploited Vulnerabilities (KEV) catalog via CISA, and Exploit Prediction Scoring System (EPSS) via FIRST.
+      </p>
+      <p>
+        Each entry is enriched with key details such as CVSS severity scores, EPSS exploitation likelihood, required remediation actions, and due dates.
+        The goal is to quickly prioritize and respond to threats that are actively being exploited in the wild.
+      </p>
+      <p>
+        KEV+ is an independent enrichment project intended for research and personal use and is not affiliated with or endorsed by CISA.
+      </p>
     </div>
-  </div>
 
-  <div class="controls">
-    <input type="text" id="searchBox" placeholder="CVE ID, product or vendor..." />
-    <select id="severityFilter">
-      <option value="">All Severities</option>
-      <option value="CRITICAL">CRITICAL</option>
-      <option value="HIGH">HIGH</option>
-      <option value="MEDIUM">MEDIUM</option>
-      <option value="LOW">LOW</option>
-    </select>
-
-    <select id="dateFilter" style="margin-left: 1rem;">
-      <option value="">All Time</option>
-      <option value="7">Last 7 Days</option>
-      <option value="30">Last 30 Days</option>
-      <option value="180">Last 180 Days</option>
-      <option value="365">Last 1 Year</option>
-    </select>
-
-    <select id="attackVectorFilter" style="margin-left: 1rem;">
-      <option value="">All Vectors</option>
-      <option value="N">Network (AV:N)</option>
-      <option value="A">Adjacent (AV:A)</option>
-      <option value="L">Local (AV:L)</option>
-      <option value="P">Physical (AV:P)</option>
-    </select>
-
-    <button onclick="exportToCSV()">Export CSV</button>
-
-    <div class="dark-mode-switch">
-      <i class="fas fa-moon"></i>
-      <label class="switch">
-        <input type="checkbox" id="darkModeToggle">
-        <span class="slider"></span>
-      </label>
+    <div class="key-toggle">
+      <button id="toggleLegend">📘 Legend: What do these values mean?</button>
+      <div id="legendBox" class="key hidden">
+        <ul>
+          <li><strong>CVSS Version:</strong> Shown in parentheses next to the CVSS score (e.g., 2.0, 3.1, 4.0).</li>
+          <li>
+            <strong>CVSS Vector:</strong> Hover over the CVSS score to see how the vulnerability is exploited (e.g., <code>AV:N/AC:L/PR:N/UI:N</code>).<br>
+            <a href="https://www.first.org/cvss/specification-document" target="_blank" rel="noopener noreferrer">CVSS Spec Guide</a>
+          </li>
+          <li><strong>CVE ID:</strong> Unique vulnerability ID (e.g., CVE-2024-12345).</li>
+          <li><strong>Vendor & Product:</strong> Each vulnerability lists the vendor above the affected software, system, or component.</li>
+          <li><strong>Severity:</strong> Based on CVSS. <strong>HIGH</strong> and <strong>CRITICAL</strong> are urgent.</li>
+          <li>
+            <strong>CVSS:</strong> Score from 0.0–10.0 indicating severity.<br>
+            — <strong>7.0+</strong> is high risk.<br>
+            — <strong>N/A</strong> means no NIST-assigned score yet; <strong>clickable</strong> to view third-party scores on NVD.
+          </li>
+          <li><strong>EPSS Score:</strong> Exploit likelihood (0.0–1.0). <strong>0.7+</strong> is high risk.</li>
+          <li><strong>EPSS %:</strong> Percentile rank for exploitation probability. <strong>90%+</strong> is critical.</li>
+          <li><strong>Date Added:</strong> When the CVE was added to CISA’s KEV list.</li>
+          <li><strong>Due Date:</strong> CISA’s mandated deadline for mitigation.</li>
+          <li><strong>Attack Vector:</strong> Shows the method of access (e.g., Network, Local). This is extracted from the CVSS vector string.</li>
+          <li><strong>Description:</strong> A short summary of the vulnerability from NVD.</li>
+        </ul>
+      </div>
     </div>
-  </div>
 
- <div class="table-container">
-  <table id="kevTable">
-    <colgroup>
-      <col style="width: auto;"> <!-- CVE ID -->
-      <col style="width: auto;"> <!-- Vendor/Product -->
-      <col style="width: auto;"> <!-- Severity -->
-      <col style="width: auto;"> <!-- CVSS -->
-      <col style="width: auto;"> <!-- EPSS Score -->
-      <col style="width: auto;"> <!-- EPSS % -->
-      <col style="width: auto;"> <!-- Date Added -->
-      <col style="width: auto;"> <!-- Due Date -->
-      <col style="width: 20%;"> <!-- Attack Vector -->
-      <col style="width: 25%;"> <!-- Description -->
-    </colgroup>
-    <thead>
-      <tr>
-        <th onclick="sortTable(0)">CVE ID <span class="sort-indicator" id="sort-0"></span></th>
-        <th onclick="sortTable(1)">Product <span class="sort-indicator" id="sort-1"></span></th>
-        <th onclick="sortTable(2)">Severity <span class="sort-indicator" id="sort-2"></span></th>
-        <th onclick="sortTable(3)">CVSS <span class="sort-indicator" id="sort-3"></span></th>
-        <th onclick="sortTable(4)">EPSS Score <span class="sort-indicator" id="sort-4"></span></th>
-        <th onclick="sortTable(5)">EPSS % <span class="sort-indicator" id="sort-5"></span></th>
-        <th onclick="sortTable(6)">Date Added <span class="sort-indicator" id="sort-6"></span></th>
-        <th onclick="sortTable(7)">Due Date <span class="sort-indicator" id="sort-7"></span></th>
-        <th>Attack Vector</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
- </div>
+    <section class="toolbar-panel">
+      <div class="controls">
+        <input type="text" id="searchBox" placeholder="CVE ID, product or vendor..." />
+        <select id="severityFilter">
+          <option value="">All Severities</option>
+          <option value="CRITICAL">CRITICAL</option>
+          <option value="HIGH">HIGH</option>
+          <option value="MEDIUM">MEDIUM</option>
+          <option value="LOW">LOW</option>
+        </select>
 
-  <div id="pagination" class="pagination-controls">
-    <button id="prevPage">Previous</button>
-    <span id="pageIndicator">Page 1</span>
-    <button id="nextPage">Next</button>
-  </div>
+        <select id="dateFilter" style="margin-left: 1rem;">
+          <option value="">All Time</option>
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="180">Last 180 Days</option>
+          <option value="365">Last 1 Year</option>
+        </select>
 
-  <div id="last-updated">
-    Last updated on: <span id="timestamp"></span>
-  </div>
+        <select id="attackVectorFilter" style="margin-left: 1rem;">
+          <option value="">All Vectors</option>
+          <option value="N">Network (AV:N)</option>
+          <option value="A">Adjacent (AV:A)</option>
+          <option value="L">Local (AV:L)</option>
+          <option value="P">Physical (AV:P)</option>
+        </select>
+
+        <button onclick="exportToCSV()">Export CSV</button>
+
+        <div class="dark-mode-switch">
+          <i class="fas fa-moon"></i>
+          <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="data-grid-panel">
+      <div class="section-heading grid-heading">
+        <h2>Known Exploited Vulnerabilities</h2>
+        <span class="record-count" id="recordCount">Loading records...</span>
+      </div>
+
+      <div class="table-container">
+        <table id="kevTable">
+          <colgroup>
+            <col style="width: auto;"> <!-- CVE ID -->
+            <col style="width: auto;"> <!-- Vendor/Product -->
+            <col style="width: auto;"> <!-- Severity -->
+            <col style="width: auto;"> <!-- CVSS -->
+            <col style="width: auto;"> <!-- EPSS Score -->
+            <col style="width: auto;"> <!-- EPSS % -->
+            <col style="width: auto;"> <!-- Date Added -->
+            <col style="width: auto;"> <!-- Due Date -->
+            <col style="width: 20%;"> <!-- Attack Vector -->
+            <col style="width: 25%;"> <!-- Description -->
+          </colgroup>
+          <thead>
+            <tr>
+              <th onclick="sortTable(0)">CVE ID <span class="sort-indicator" id="sort-0"></span></th>
+              <th onclick="sortTable(1)">Product <span class="sort-indicator" id="sort-1"></span></th>
+              <th onclick="sortTable(2)">Severity <span class="sort-indicator" id="sort-2"></span></th>
+              <th onclick="sortTable(3)">CVSS <span class="sort-indicator" id="sort-3"></span></th>
+              <th onclick="sortTable(4)">EPSS Score <span class="sort-indicator" id="sort-4"></span></th>
+              <th onclick="sortTable(5)">EPSS % <span class="sort-indicator" id="sort-5"></span></th>
+              <th onclick="sortTable(6)">Date Added <span class="sort-indicator" id="sort-6"></span></th>
+              <th onclick="sortTable(7)">Due Date <span class="sort-indicator" id="sort-7"></span></th>
+              <th>Attack Vector</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="pagination" class="pagination-controls">
+        <button id="prevPage">Previous</button>
+        <span id="pageIndicator">Page 1</span>
+        <button id="nextPage">Next</button>
+      </div>
+    </section>
+  </main>
+
 
   <script>
     fetch('last_updated.txt')

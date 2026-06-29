@@ -7,8 +7,9 @@ let currentPage = 1;
 const pageSize = 25;
 
 function getAttackVector(cvssVector) {
-  if (!cvssVector) return null;
-  const match = cvssVector.match(/AV:([NALP])/);
+  const vector = fieldText(cvssVector);
+  if (!vector) return null;
+  const match = vector.match(/AV:([NALP])/);
   return match ? match[1] : null;
 }
 
@@ -16,22 +17,96 @@ function getAttackVector(cvssVector) {
 fetch('https://kev-dash-r2-test.austm999.workers.dev/kev_enriched.json')
   .then(res => res.json())
   .then(data => {
-    fullData = data;
-    tableData = data;
+    fullData = normalizeDashboardData(data);
+    tableData = fullData;
+    updateSummaryMetrics(fullData);
     renderTable();
   });
+
+function normalizeDashboardData(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.vulnerabilities)) return data.vulnerabilities;
+  if (data && Array.isArray(data.data)) return data.data;
+  return [];
+}
+
+function setMetricText(id, value) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.textContent = Number(value || 0).toLocaleString();
+  }
+}
+
+function isRecentlyAdded(dateAdded) {
+  if (!dateAdded) return false;
+
+  const addedDate = new Date(dateAdded);
+  if (isNaN(addedDate)) return false;
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  return addedDate >= thirtyDaysAgo;
+}
+
+function hasKnownRansomwareUse(value) {
+  if (!value) return false;
+
+  const normalized = value.toString().trim().toLowerCase();
+  return normalized === "known" || normalized === "yes" || normalized === "true";
+}
+
+function updateSummaryMetrics(data) {
+  const records = normalizeDashboardData(data);
+
+  setMetricText("metricTotal", records.length);
+  setMetricText("metricCritical", records.filter(item => getSeverity(item) === "CRITICAL").length);
+  setMetricText("metricHigh", records.filter(item => getSeverity(item) === "HIGH").length);
+  setMetricText("metricNetwork", records.filter(item => fieldText(item.cvssVector).includes("AV:N")).length);
+  setMetricText("metricRansomware", records.filter(item => hasKnownRansomwareUse(item.knownRansomwareCampaignUse)).length);
+  setMetricText("metricRecent", records.filter(item => isRecentlyAdded(item.dateAdded)).length);
+}
+
+function getSeverity(item) {
+  return item && item.cvssSeverity ? item.cvssSeverity.toString().trim().toUpperCase() : "";
+}
+
+function fieldText(value) {
+  return value == null ? "" : value.toString();
+}
+
+function formatFixed(value, digits) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(digits) : "N/A";
+}
+
+function formatPercent(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${(number * 100).toFixed(2)}%` : "N/A";
+}
+
+function updateRecordCount() {
+  const recordCount = document.getElementById("recordCount");
+  if (recordCount) {
+    const count = Array.isArray(tableData) ? tableData.length : 0;
+    recordCount.textContent = `${count.toLocaleString()} ${count === 1 ? "record" : "records"}`;
+  }
+}
 
 function renderTable() {
   const tbody = document.querySelector("#kevTable tbody");
   tbody.innerHTML = "";
+  updateRecordCount();
 
-  const totalPages = Math.ceil(tableData.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(tableData.length / pageSize));
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
   const pageData = tableData.slice(start, end);
 
   pageData.forEach(item => {
     const row = document.createElement("tr");
+    const cvssVector = fieldText(item.cvssVector);
+    const hasCvssVector = cvssVector && cvssVector !== "N/A";
 
     const cvssCellContent = item.cvssScore !== "N/A" && item.cvssScore != null
       ? item.cvssScore
@@ -51,11 +126,11 @@ function renderTable() {
         ${item.product ? `<div class="product-name">${item.product}</div>` : ''}
       </td>
       <td>${item.cvssSeverity || ''}</td>
-      <td title="${item.cvssVector && item.cvssVector !== 'N/A' ? item.cvssVector : ''}">
+      <td title="${hasCvssVector ? cvssVector : ''}">
         ${cvssCellContent} ${cvssVersionText}
       </td>
-      <td>${item.epssScore !== "N/A" && item.epssScore != null ? item.epssScore.toFixed(4) : 'N/A'}</td>
-      <td>${item.epssPercentile !== "N/A" && item.epssPercentile != null ? (item.epssPercentile * 100).toFixed(2) + '%' : 'N/A'}</td>
+      <td>${item.epssScore !== "N/A" && item.epssScore != null ? formatFixed(item.epssScore, 4) : 'N/A'}</td>
+      <td>${item.epssPercentile !== "N/A" && item.epssPercentile != null ? formatPercent(item.epssPercentile) : 'N/A'}</td>
       <td>${item.dateAdded || ''}</td>
       <td class="${item.dueDate && new Date(item.dueDate) < new Date() ? 'overdue' : ''}">
         ${item.dueDate || ''}
@@ -63,9 +138,9 @@ function renderTable() {
       
       <td class="attack-vector">
         <div class="attack-content">
-          ${item.cvssVector && item.cvssVector !== "N/A" ? item.cvssVector : 'N/A'}
+          ${hasCvssVector ? cvssVector : 'N/A'}
         </div>
-        ${item.cvssVector && item.cvssVector !== "N/A" && item.cvssVector.length > 20
+        ${hasCvssVector && cvssVector.length > 20
           ? '<span class="toggle-link">Show more</span>'
           : ''}
       </td>
@@ -94,9 +169,9 @@ function renderTable() {
 document.getElementById("searchBox").addEventListener("input", e => {
   const search = e.target.value.toLowerCase();
   const filtered = fullData.filter(item =>
-    item.cveID.toLowerCase().includes(search) ||
-    (item.product && item.product.toLowerCase().includes(search)) ||
-    (item.vendor && item.vendor.toLowerCase().includes(search))
+    fieldText(item.cveID).toLowerCase().includes(search) ||
+    fieldText(item.product).toLowerCase().includes(search) ||
+    fieldText(item.vendor).toLowerCase().includes(search)
   );
   tableData = filtered;
   currentPage = 1;
@@ -114,7 +189,7 @@ function applyFilters() {
   const now = new Date();
 
   tableData = fullData.filter(item => {
-    const matchesSeverity = severityValue ? item.cvssSeverity === severityValue : true;
+    const matchesSeverity = severityValue ? getSeverity(item) === severityValue : true;
 
     let matchesDate = true;
     if (dateValue) {
@@ -218,7 +293,7 @@ document.getElementById("prevPage").addEventListener("click", () => {
 });
 
 document.getElementById("nextPage").addEventListener("click", () => {
-  const totalPages = Math.ceil(tableData.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(tableData.length / pageSize));
   if (currentPage < totalPages) {
     currentPage++;
     renderTable();

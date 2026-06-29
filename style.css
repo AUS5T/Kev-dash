@@ -83,7 +83,7 @@ Base Layout and Typography
 body {
   min-width: 320px;
   margin: 0;
-  padding: 28px;
+  padding: 0;
   background:
     linear-gradient(180deg, var(--bg) 0%, var(--surface-subtle) 100%);
   background-color: var(--bg);
@@ -91,6 +91,12 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.5;
+}
+
+.dashboard-shell {
+  width: min(1500px, calc(100% - 56px));
+  margin: 0 auto;
+  padding: 28px 0;
 }
 
 h1 {
@@ -140,9 +146,8 @@ Header and Layout Blocks
   align-items: center;
   gap: 16px;
   width: 100%;
-  max-width: 1500px;
-  margin: 0 auto 18px;
-  padding: 20px 22px;
+  margin: 0 0 18px;
+  padding: 24px 26px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background:
@@ -158,16 +163,41 @@ Header and Layout Blocks
   content: "";
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
+.header-copy {
+  flex: 1 1 420px;
+  min-width: 240px;
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  max-width: 780px;
+  margin: 9px 0 0;
+  color: var(--muted-text);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
-  justify-content: flex-start;
-  align-items: center;
-  width: 100%;
-  max-width: 1500px;
-  margin: 0 auto 16px;
-  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.summary-card {
+  position: relative;
+  min-height: 112px;
+  padding: 18px;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 12px;
   background:
@@ -175,10 +205,118 @@ Header and Layout Blocks
   box-shadow: var(--shadow-subtle);
 }
 
+.summary-card::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--accent);
+  content: "";
+}
+
+.summary-card.critical::before {
+  background: var(--severity-critical);
+}
+
+.summary-card.high::before {
+  background: var(--severity-high);
+}
+
+.summary-card.network::before,
+.summary-card.recent::before {
+  background: var(--accent);
+}
+
+.summary-card.ransomware::before {
+  background: var(--danger);
+}
+
+.summary-card span {
+  display: block;
+  min-height: 34px;
+  color: var(--muted-text);
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.summary-card strong {
+  display: block;
+  margin-top: 12px;
+  color: var(--text);
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 780;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.toolbar-panel,
+.data-grid-panel {
+  margin-bottom: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, var(--surface-elevated), var(--surface));
+  box-shadow: var(--shadow-subtle);
+}
+
+.toolbar-panel {
+  padding: 14px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.grid-heading {
+  margin-bottom: 0;
+  padding: 16px 18px;
+}
+
+.record-count {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted-text);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .description {
   width: 100%;
-  max-width: 1500px;
-  margin: 0 auto 16px;
+  margin: 0 0 16px;
   padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -379,13 +517,13 @@ table {
 
 .table-container {
   width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
+  margin: 0;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
   background: var(--table-bg);
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 th,
@@ -585,8 +723,7 @@ Legend Box & Toggle Button
 ────────────────────────────────────────────────────────── */
 .key-toggle {
   width: 100%;
-  max-width: 1500px;
-  margin: 0 auto 16px;
+  margin: 0 0 16px;
 }
 
 #toggleLegend {
@@ -722,14 +859,13 @@ Pagination and Footer
   justify-content: center;
   gap: 10px;
   width: 100%;
-  max-width: 1500px;
-  margin: 16px auto 0;
+  margin: 0;
   padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background:
-    linear-gradient(180deg, var(--surface-elevated), var(--surface));
-  box-shadow: var(--shadow-subtle);
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 14px 14px;
+  background: var(--surface-panel);
+  box-shadow: none;
 }
 
 #pageIndicator {
@@ -741,22 +877,37 @@ Pagination and Footer
 }
 
 #last-updated {
-  width: 100%;
-  max-width: 1500px;
-  margin: 12px auto 0;
+  display: block;
+  margin: 12px 0 0;
   color: var(--muted-text);
   font-size: 0.86rem;
-  text-align: right;
+  text-align: left;
 }
 
 @media (max-width: 760px) {
-  body {
-    padding: 16px;
+  .dashboard-shell {
+    width: min(100% - 32px, 1500px);
+    padding: 16px 0;
   }
 
   .header {
     align-items: flex-start;
     padding: 16px;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-card {
+    min-height: 104px;
+    padding: 15px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .logo {
@@ -794,5 +945,11 @@ Pagination and Footer
 
   #last-updated {
     text-align: left;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
