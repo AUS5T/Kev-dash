@@ -7,6 +7,7 @@ let currentPage = 1;
 const pageSize = 25;
 const themeStorageKey = "patchsignal-theme";
 const columnVisibilityStorageKey = "patchsignal-visible-columns";
+const lastUpdatedUrl = "https://kev-dash-r2-test.austm999.workers.dev/last_updated.txt";
 const optionalColumns = [
   { id: "epssScore", index: 4 },
   { id: "epssPercentile", index: 5 },
@@ -145,6 +146,7 @@ function initDashboard() {
   if (!document.getElementById("kevTable")) return;
 
   initializeColumnControls();
+  loadLastKevCheckTimestamp();
   loadDashboardData();
 
   document.getElementById("searchBox").addEventListener("input", e => {
@@ -211,6 +213,44 @@ function loadDashboardData() {
       console.error('Error loading dashboard data:', error);
       showDashboardLoadError();
     });
+}
+
+function loadLastKevCheckTimestamp() {
+  const timestampElement = document.getElementById("timestamp");
+  const lastUpdatedElement = document.getElementById("last-updated");
+  if (!timestampElement || !lastUpdatedElement) return;
+
+  fetch(lastUpdatedUrl)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Timestamp request failed with status ${response.status}`);
+      }
+      return response.text();
+    })
+    .then(timestamp => {
+      timestampElement.textContent = formatUtcTimestamp(timestamp.trim());
+    })
+    .catch(error => {
+      console.error("Error loading Worker last_updated timestamp:", error);
+      lastUpdatedElement.textContent = "Last KEV check unavailable";
+    });
+}
+
+function formatUtcTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  if (isNaN(date)) {
+    throw new Error("Invalid last_updated timestamp");
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+    timeZoneName: "short",
+  }).format(date);
 }
 
 function normalizeDashboardData(data) {

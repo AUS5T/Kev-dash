@@ -25,7 +25,7 @@
         <h1>PatchSignal</h1>
         <p class="subtitle">Prioritize exploited vulnerabilities with enriched severity, likelihood, and remediation context.</p>
         <p id="last-updated">
-          Last updated: <span id="timestamp">Loading...</span>
+          Last KEV check: <span id="timestamp">Loading...</span>
         </p>
       </div>
       <nav class="site-nav" aria-label="Primary navigation">
@@ -219,16 +219,6 @@
       </div>
     </section>
   </main>
-
-
-  <script>
-    fetch('last_updated.txt')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('timestamp').innerText = data.trim();
-      })
-      .catch(err => console.error('Error loading last updated timestamp:', err));
-  </script>
 
   <script src="script.js"></script>
 </body>
