@@ -6,6 +6,15 @@ let fullData = [];
 let currentPage = 1;
 const pageSize = 25;
 const themeStorageKey = "patchsignal-theme";
+const columnVisibilityStorageKey = "patchsignal-visible-columns";
+const optionalColumns = [
+  { id: "epssScore", index: 4 },
+  { id: "epssPercentile", index: 5 },
+  { id: "dateAdded", index: 6 },
+  { id: "dueDate", index: 7 },
+  { id: "attackVector", index: 8 },
+  { id: "description", index: 9 },
+];
 
 initTheme();
 initDashboard();
@@ -46,9 +55,96 @@ function saveTheme(theme) {
   } catch (error) {}
 }
 
+function getVisibleColumnIds() {
+  const defaultVisibleColumns = optionalColumns.map(column => column.id);
+
+  try {
+    const savedValue = localStorage.getItem(columnVisibilityStorageKey);
+    if (!savedValue) return defaultVisibleColumns;
+
+    const parsed = JSON.parse(savedValue);
+    if (!Array.isArray(parsed)) return defaultVisibleColumns;
+
+    return parsed.filter(columnId => optionalColumns.some(column => column.id === columnId));
+  } catch (error) {
+    return defaultVisibleColumns;
+  }
+}
+
+function saveVisibleColumnIds(visibleColumnIds) {
+  try {
+    localStorage.setItem(columnVisibilityStorageKey, JSON.stringify(visibleColumnIds));
+  } catch (error) {}
+}
+
+function initializeColumnControls() {
+  const columnToggles = Array.from(document.querySelectorAll(".column-toggle"));
+  if (!columnToggles.length) return;
+
+  const visibleColumnIds = getVisibleColumnIds();
+
+  columnToggles.forEach(toggle => {
+    toggle.checked = visibleColumnIds.includes(toggle.dataset.columnId);
+    toggle.addEventListener("change", () => {
+      const selectedColumnIds = columnToggles
+        .filter(columnToggle => columnToggle.checked)
+        .map(columnToggle => columnToggle.dataset.columnId);
+
+      saveVisibleColumnIds(selectedColumnIds);
+      applyColumnVisibility();
+    });
+  });
+
+  const showAllButton = document.getElementById("showAllColumns");
+  if (showAllButton) {
+    showAllButton.addEventListener("click", () => {
+      columnToggles.forEach(toggle => {
+        toggle.checked = true;
+      });
+
+      saveVisibleColumnIds(optionalColumns.map(column => column.id));
+      applyColumnVisibility();
+    });
+  }
+
+  applyColumnVisibility();
+}
+
+function applyColumnVisibility() {
+  const table = document.getElementById("kevTable");
+  if (!table) return;
+
+  const visibleColumnIds = getVisibleColumnIds();
+  const cols = table.querySelectorAll("colgroup col");
+  const headerCells = table.tHead && table.tHead.rows[0]
+    ? table.tHead.rows[0].cells
+    : [];
+  const rows = table.tBodies[0] ? table.tBodies[0].rows : [];
+
+  optionalColumns.forEach(column => {
+    const shouldShow = visibleColumnIds.includes(column.id);
+    const displayValue = shouldShow ? "" : "none";
+
+    if (cols[column.index]) {
+      cols[column.index].style.display = displayValue;
+    }
+
+    if (headerCells[column.index]) {
+      headerCells[column.index].style.display = displayValue;
+    }
+
+    Array.from(rows).forEach(row => {
+      if (row.cells[column.index]) {
+        row.cells[column.index].style.display = displayValue;
+      }
+    });
+  });
+}
+
 function initDashboard() {
   if (!document.getElementById("kevTable")) return;
 
+  initializeColumnControls();
   loadDashboardData();
 
   document.getElementById("searchBox").addEventListener("input", e => {
@@ -289,6 +385,7 @@ function renderTable() {
   document.getElementById("pageIndicator").textContent = `Page ${currentPage} of ${totalPages}`;
   document.getElementById("prevPage").disabled = currentPage === 1;
   document.getElementById("nextPage").disabled = currentPage === totalPages;
+  applyColumnVisibility();
 }
 
 function applyFilters() {

@@ -137,6 +137,37 @@
 
         <button onclick="exportToCSV()">Export CSV</button>
 
+        <details class="column-menu">
+          <summary class="column-summary">Columns</summary>
+          <div class="column-options">
+            <label>
+              <input type="checkbox" class="column-toggle" data-column-id="epssScore" checked>
+              EPSS Score
+            </label>
+            <label>
+              <input type="checkbox" class="column-toggle" data-column-id="epssPercentile" checked>
+              EPSS %
+            </label>
+            <label>
+              <input type="checkbox" class="column-toggle" data-column-id="dateAdded" checked>
+              Date Added
+            </label>
+            <label>
+              <input type="checkbox" class="column-toggle" data-column-id="dueDate" checked>
+              Due Date
+            </label>
+            <label>
+              <input type="checkbox" class="column-toggle" data-column-id="attackVector" checked>
+              Attack Vector
+            </label>
+            <label>
+              <input type="checkbox" class="column-toggle" data-column-id="description" checked>
+              Description
+            </label>
+            <button type="button" id="showAllColumns">Show all</button>
+          </div>
+        </details>
+
       </div>
     </section>
 

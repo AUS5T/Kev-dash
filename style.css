@@ -550,16 +550,15 @@ select {
   min-width: 94px;
   min-height: 40px;
   padding: 0.55rem 0.75rem;
-  border: 1px solid var(--accent-border);
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, var(--accent-hover), var(--accent));
-  color: #ffffff;
+    linear-gradient(180deg, var(--surface-elevated), var(--surface));
+  color: var(--text);
   font: inherit;
   font-size: 0.93rem;
   font-weight: 650;
   cursor: pointer;
-  box-shadow: var(--shadow-subtle);
   list-style: none;
 }
 
@@ -590,11 +589,11 @@ select {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 50;
+  z-index: 60;
   display: grid;
   gap: 8px;
-  min-width: 190px;
-  padding: 10px;
+  min-width: 210px;
+  padding: 12px;
   border: 1px solid var(--border-strong);
   border-radius: 10px;
   background:
