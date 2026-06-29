@@ -12,7 +12,8 @@ function getAttackVector(cvssVector) {
   return match ? match[1] : null;
 }
 
-fetch('kev_enriched.json')
+// Load dashboard data from the Worker/R2 endpoint.
+fetch('https://kev-dash-r2-test.austm999.workers.dev/kev_enriched.json')
   .then(res => res.json())
   .then(data => {
     fullData = data;
