@@ -228,7 +228,7 @@ function loadLastKevCheckTimestamp() {
       return response.text();
     })
     .then(timestamp => {
-      timestampElement.textContent = formatUtcTimestamp(timestamp.trim());
+      timestampElement.textContent = formatLocalTimestamp(timestamp.trim());
     })
     .catch(error => {
       console.error("Error loading Worker last_updated timestamp:", error);
@@ -236,19 +236,18 @@ function loadLastKevCheckTimestamp() {
     });
 }
 
-function formatUtcTimestamp(timestamp) {
+function formatLocalTimestamp(timestamp) {
   const date = new Date(timestamp);
   if (isNaN(date)) {
     throw new Error("Invalid last_updated timestamp");
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "UTC",
     timeZoneName: "short",
   }).format(date);
 }
