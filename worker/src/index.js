@@ -7,7 +7,7 @@ import {
   requireAdminToken,
 } from "./http.js";
 import { getR2Object, hasKevDataBinding, putR2Object } from "./r2.js";
-import { runUpdateFeedsReadOnlySkeleton } from "./updateFeeds.js";
+import { runManualUpdateFeeds } from "./updateFeeds.js";
 
 export default {
   async fetch(request, env) {
@@ -37,6 +37,10 @@ export default {
       },
       200,
     );
+  },
+
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(runScheduledUpdate(env, controller));
   },
 };
 
@@ -174,7 +178,7 @@ async function handleUpdateFeeds(request, env) {
     return authError;
   }
 
-  const result = await runUpdateFeedsReadOnlySkeleton(env);
+  const result = await runManualUpdateFeeds(env);
   return jsonResponse(result.body, result.status);
 }
 
@@ -238,4 +242,42 @@ async function handlePublicR2Read(request, env, file) {
 function findDataFile(pathname) {
   const key = pathname.startsWith("/") ? pathname.slice(1) : pathname;
   return DATA_FILES.find((file) => file.key === key) || null;
+}
+
+async function runScheduledUpdate(env, controller) {
+  const startedAt = new Date().toISOString();
+  const result = await runManualUpdateFeeds(env);
+  const body = result.body || {};
+
+  const summary = {
+    ok: Boolean(body.ok),
+    status: result.status,
+    mode: body.mode,
+    scheduledTime: controller?.scheduledTime ?? null,
+    startedAt,
+    generatedRecords: body.generatedRecords ?? 0,
+    epss: {
+      chunks: body.epss?.chunks ?? 0,
+      recordsLoaded: body.epss?.recordsLoaded ?? 0,
+      failed: body.epss?.failed ?? false,
+      chunksFailed: body.epss?.chunksFailed ?? 0,
+    },
+    nvd: {
+      attempted: body.nvd?.attempted ?? 0,
+      succeeded: body.nvd?.succeeded ?? 0,
+      failed: body.nvd?.failed ?? 0,
+      skippedDueToCap: body.nvd?.skippedDueToCap ?? 0,
+    },
+    outputKeys: Array.isArray(body.outputs) ? body.outputs.map((output) => output.key) : [],
+    warningCount: Array.isArray(body.warnings) ? body.warnings.length : 0,
+  };
+
+  if (body.ok) {
+    console.log("Scheduled KEV update completed", summary);
+  } else {
+    console.error("Scheduled KEV update failed", {
+      ...summary,
+      error: body.error,
+    });
+  }
 }
