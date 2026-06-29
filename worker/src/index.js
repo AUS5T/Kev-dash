@@ -1,5 +1,9 @@
 const TEST_OBJECT_KEY = "test-r2.txt";
 const PAGES_ORIGIN = "https://kev-dash.pages.dev";
+const ALLOWED_CORS_ORIGINS = new Set([
+  "https://kev-dash.pages.dev",
+  "http://localhost:8000",
+]);
 const SEED_FILES = [
   {
     key: "kev_enriched.json",
@@ -169,8 +173,13 @@ async function handleSeedFromRepo(request, env) {
 }
 
 async function handlePublicR2Read(request, env, file) {
+  if (request.method === "OPTIONS") {
+    return handlePublicCorsPreflight(request);
+  }
+
   if (request.method !== "GET") {
-    return jsonResponse(
+    return jsonResponseWithCors(
+      request,
       {
         ok: false,
         error: "Method not allowed. Use GET.",
@@ -180,7 +189,8 @@ async function handlePublicR2Read(request, env, file) {
   }
 
   if (!env.KEV_DATA) {
-    return jsonResponse(
+    return jsonResponseWithCors(
+      request,
       {
         ok: false,
         error: "Missing R2 binding: KEV_DATA",
@@ -194,7 +204,8 @@ async function handlePublicR2Read(request, env, file) {
   const object = await env.KEV_DATA.get(file.key);
 
   if (!object) {
-    return jsonResponse(
+    return jsonResponseWithCors(
+      request,
       {
         ok: false,
         error: "R2 object not found.",
@@ -207,6 +218,7 @@ async function handlePublicR2Read(request, env, file) {
   const headers = new Headers();
   headers.set("content-type", file.contentType);
   headers.set("cache-control", "no-store");
+  applyCorsHeaders(request, headers);
   if (object.httpEtag) {
     headers.set("etag", object.httpEtag);
   }
@@ -215,6 +227,54 @@ async function handlePublicR2Read(request, env, file) {
     status: 200,
     headers,
   });
+}
+
+function handlePublicCorsPreflight(request) {
+  const headers = new Headers();
+  headers.set("cache-control", "no-store");
+  applyCorsHeaders(request, headers);
+
+  if (!headers.has("access-control-allow-origin")) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "CORS origin not allowed.",
+      },
+      403,
+    );
+  }
+
+  headers.set("access-control-allow-methods", "GET, OPTIONS");
+  headers.set("access-control-allow-headers", "content-type");
+  headers.set("access-control-max-age", "0");
+
+  return new Response(null, {
+    status: 204,
+    headers,
+  });
+}
+
+function jsonResponseWithCors(request, payload, status) {
+  const headers = new Headers();
+  headers.set("content-type", "application/json; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  applyCorsHeaders(request, headers);
+
+  return new Response(JSON.stringify(payload, null, 2), {
+    status,
+    headers,
+  });
+}
+
+function applyCorsHeaders(request, headers) {
+  const origin = request.headers.get("origin");
+
+  if (!origin || !ALLOWED_CORS_ORIGINS.has(origin)) {
+    return;
+  }
+
+  headers.set("access-control-allow-origin", origin);
+  headers.set("vary", "Origin");
 }
 
 function findSeedFile(pathname) {
