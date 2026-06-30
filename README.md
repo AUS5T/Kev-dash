@@ -6,14 +6,25 @@ PatchSignal is an independent dashboard. It is not affiliated with or endorsed b
 
 ## Live URLs
 
-Frontend:
+Primary frontend:
 
 - <https://patchsignal.org>
+
+Cloudflare Pages fallback/deployment URL:
+
 - <https://kev-dash.pages.dev>
 
-Worker/data API:
+Worker/data API base:
 
 - <https://kev-dash-r2-test.austm999.workers.dev>
+
+The Worker root path is not a public landing page; unknown routes intentionally return `404`.
+
+Public data endpoints:
+
+- <https://kev-dash-r2-test.austm999.workers.dev/last_updated.txt>
+- <https://kev-dash-r2-test.austm999.workers.dev/kev_enriched.json>
+- <https://kev-dash-r2-test.austm999.workers.dev/combined_enriched.json>
 
 ## Architecture
 
