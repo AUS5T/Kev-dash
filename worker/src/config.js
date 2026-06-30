@@ -7,6 +7,8 @@ export const EPSS_BATCH_SIZE = 75;
 export const NVD_FALLBACK_CAP = 10;
 export const ALLOWED_CORS_ORIGINS = new Set([
   "https://kev-dash.pages.dev",
+  "https://patchsignal.org",
+  "https://www.patchsignal.org",
   "http://localhost:8000",
 ]);
 
