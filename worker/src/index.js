@@ -1,4 +1,4 @@
-import { DATA_FILES, PAGES_ORIGIN, TEST_OBJECT_KEY } from "./config.js";
+import { DATA_FILES, PAGES_ORIGIN } from "./config.js";
 import {
   applyCorsHeaders,
   handlePublicCorsPreflight,
@@ -12,10 +12,6 @@ import { runManualUpdateFeeds } from "./updateFeeds.js";
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-
-    if (url.pathname === "/test-r2") {
-      return handleTestR2(env);
-    }
 
     if (url.pathname === "/seed-from-repo") {
       return handleSeedFromRepo(request, env);
@@ -33,7 +29,7 @@ export default {
     return jsonResponse(
       {
         ok: true,
-        message: "Kev-dash R2 test Worker. Use /test-r2, /seed-from-repo, or one of the public data file paths.",
+        message: "Kev-dash Worker. Use /seed-from-repo or one of the public data file paths.",
       },
       200,
     );
@@ -43,49 +39,6 @@ export default {
     ctx.waitUntil(runScheduledUpdate(env, controller));
   },
 };
-
-async function handleTestR2(env) {
-  if (!hasKevDataBinding(env)) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: "Missing R2 binding: KEV_DATA",
-      },
-      500,
-    );
-  }
-
-  // Connectivity test only. This does not generate KEV data, update the
-  // dashboard, fetch external APIs, or touch production JSON objects.
-  const writtenAt = new Date().toISOString();
-  const body = `Kev-dash R2 connectivity test\nwritten_at=${writtenAt}\n`;
-
-  await putR2Object(env, TEST_OBJECT_KEY, body, "text/plain; charset=utf-8");
-
-  const object = await getR2Object(env, TEST_OBJECT_KEY);
-
-  if (!object) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: `Wrote ${TEST_OBJECT_KEY}, but could not read it back.`,
-      },
-      500,
-    );
-  }
-
-  return jsonResponse(
-    {
-      ok: true,
-      bucketBinding: "KEV_DATA",
-      bucketName: "kev-dash-data",
-      key: TEST_OBJECT_KEY,
-      writtenAt,
-      readBack: await object.text(),
-    },
-    200,
-  );
-}
 
 async function handleSeedFromRepo(request, env) {
   if (request.method !== "POST") {
