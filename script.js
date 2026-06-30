@@ -13,8 +13,6 @@ const optionalColumns = [
   { id: "epssPercentile", index: 5 },
   { id: "dateAdded", index: 6 },
   { id: "dueDate", index: 7 },
-  { id: "attackVector", index: 8 },
-  { id: "description", index: 9 },
 ];
 
 initTheme();
@@ -384,19 +382,238 @@ function createTextCell(value) {
   return cell;
 }
 
-function appendToggleLink(parent) {
-  const toggle = document.createElement("span");
-  toggle.className = "toggle-link";
-  toggle.textContent = "Show more";
-  parent.appendChild(toggle);
-}
-
 function cvssScoreText(value) {
   const text = fieldText(value).trim();
   if (!text || text === "N/A" || text.includes("<a ")) {
     return "N/A";
   }
   return text;
+}
+
+function vendorProductText(item) {
+  const vendor = fieldText(item.vendor).trim();
+  const product = fieldText(item.product).trim();
+
+  if (vendor && product && vendor.toLowerCase() === product.toLowerCase()) {
+    return vendor;
+  }
+
+  if (vendor && product) return `${vendor}/${product}`;
+  return vendor || product || "Unknown product";
+}
+
+function titleCaseSeverity(value) {
+  const severity = fieldText(value).trim().toLowerCase();
+  if (!severity) return "Unknown severity";
+
+  return severity.charAt(0).toUpperCase() + severity.slice(1);
+}
+
+function numberValue(value) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isDueDateOverdue(dueDate) {
+  if (!dueDate) return false;
+
+  const date = new Date(dueDate);
+  if (isNaN(date)) return false;
+
+  return date < new Date();
+}
+
+function isDueDateApproaching(dueDate) {
+  if (!dueDate || isDueDateOverdue(dueDate)) return false;
+
+  const date = new Date(dueDate);
+  if (isNaN(date)) return false;
+
+  const fourteenDaysFromNow = new Date();
+  fourteenDaysFromNow.setDate(fourteenDaysFromNow.getDate() + 14);
+  return date <= fourteenDaysFromNow;
+}
+
+function triageTags(item) {
+  const tags = [];
+  const epssPercentile = numberValue(item.epssPercentile);
+
+  if (getAttackVector(item.cvssVector) === "N") {
+    tags.push("Network");
+  }
+
+  if (epssPercentile !== null && epssPercentile >= 0.9) {
+    tags.push("High EPSS");
+  }
+
+  if (hasKnownRansomwareUse(item.knownRansomwareCampaignUse)) {
+    tags.push("Ransomware");
+  }
+
+  if (isDueDateOverdue(item.dueDate)) {
+    tags.push("Overdue");
+  } else if (isDueDateApproaching(item.dueDate)) {
+    tags.push("Due soon");
+  }
+
+  return tags.length ? tags : ["Review"];
+}
+
+function detailSummaryText(item) {
+  const cve = isSafeCveId(item.cveID) ? normalizedCveId(item.cveID) : fieldText(item.cveID).trim();
+  return `${cve || "Unknown CVE"} | ${vendorProductText(item)} | ${titleCaseSeverity(getSeverity(item))} | ${triageTags(item).join(" · ")}`;
+}
+
+function investigationQueryText(item) {
+  const values = [];
+  [
+    isSafeCveId(item.cveID) ? normalizedCveId(item.cveID) : fieldText(item.cveID).trim(),
+    fieldText(item.vendor).trim(),
+    fieldText(item.product).trim(),
+  ].forEach(value => {
+    if (!value) return;
+
+    const isDuplicate = values.some(existingValue => existingValue.toLowerCase() === value.toLowerCase());
+    if (!isDuplicate) {
+      values.push(value);
+    }
+  });
+
+  return values.map(value => `"${value.replaceAll('"', '\\"')}"`).join(" OR ");
+}
+
+function copyPlainText(text, button) {
+  if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+    button.textContent = "Copy unavailable";
+    return;
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = button.dataset.label || button.textContent;
+    button.textContent = "Copied";
+    window.setTimeout(() => {
+      button.textContent = originalText;
+    }, 1200);
+  }).catch(() => {
+    button.textContent = "Copy failed";
+  });
+}
+
+function createDetailActionButton(label, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "detail-action";
+  button.dataset.label = label;
+  button.textContent = label;
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+function attackVectorText(cvssVector) {
+  const vector = getAttackVector(cvssVector);
+  const labels = {
+    N: "Network",
+    A: "Adjacent",
+    L: "Local",
+    P: "Physical",
+  };
+
+  return labels[vector] || "Unknown";
+}
+
+function appendDetailSection(panel, labelText, valueText, className) {
+  const label = document.createElement("div");
+  label.className = "detail-label";
+  label.textContent = labelText;
+  panel.appendChild(label);
+
+  const content = document.createElement("div");
+  content.className = className;
+  content.textContent = valueText || "N/A";
+  panel.appendChild(content);
+}
+
+function appendCompactTagList(parent, tags) {
+  const tagList = document.createElement("div");
+  tagList.className = "detail-tags table-triage-tags";
+  tags.forEach(tagText => {
+    const tag = document.createElement("span");
+    tag.className = "detail-tag table-triage-tag";
+    tag.textContent = tagText;
+    tagList.appendChild(tag);
+  });
+  parent.appendChild(tagList);
+}
+
+function createDetailRow(item, columnCount) {
+  const row = document.createElement("tr");
+  row.className = "detail-row";
+
+  const cell = document.createElement("td");
+  cell.colSpan = columnCount;
+
+  const panel = document.createElement("div");
+  panel.className = "detail-panel";
+
+  const header = document.createElement("div");
+  header.className = "detail-header";
+  const cve = isSafeCveId(item.cveID) ? normalizedCveId(item.cveID) : fieldText(item.cveID).trim();
+  header.textContent = `${cve || "Unknown CVE"} · ${vendorProductText(item)} · ${titleCaseSeverity(getSeverity(item))}`;
+  panel.appendChild(header);
+
+  appendDetailSection(panel, "Full description", fieldText(item.description), "detail-description");
+
+  const cvssVector = fieldText(item.cvssVector);
+  appendDetailSection(panel, "Attack vector", attackVectorText(cvssVector), "detail-vector");
+  appendDetailSection(panel, "CVSS vector", cvssVector && cvssVector !== "N/A" ? cvssVector : "N/A", "detail-vector");
+
+  const actions = document.createElement("div");
+  actions.className = "detail-actions";
+  actions.appendChild(createDetailActionButton("Copy CVE", event => {
+    copyPlainText(cve, event.currentTarget);
+  }));
+  actions.appendChild(createDetailActionButton("Copy summary", event => {
+    copyPlainText(detailSummaryText(item), event.currentTarget);
+  }));
+  actions.appendChild(createDetailActionButton("Copy investigation query", event => {
+    copyPlainText(investigationQueryText(item), event.currentTarget);
+  }));
+
+  const nvdLink = createNvdCveLink(item.cveID, "Open NVD");
+  if (nvdLink) {
+    nvdLink.className = "detail-action detail-link";
+    actions.appendChild(nvdLink);
+  }
+
+  panel.appendChild(actions);
+  cell.appendChild(panel);
+  row.appendChild(cell);
+
+  return row;
+}
+
+function collapseExpandedDetailRows(tbody) {
+  tbody.querySelectorAll(".detail-row").forEach(row => row.remove());
+  tbody.querySelectorAll(".details-toggle[aria-expanded='true']").forEach(button => {
+    button.setAttribute("aria-expanded", "false");
+    button.textContent = "Details";
+  });
+}
+
+function toggleDetailRow(item, row, button) {
+  const tbody = row.parentElement;
+  const isExpanded = button.getAttribute("aria-expanded") === "true";
+
+  collapseExpandedDetailRows(tbody);
+
+  if (isExpanded) {
+    return;
+  }
+
+  const detailRow = createDetailRow(item, row.cells.length);
+  row.after(detailRow);
+  button.setAttribute("aria-expanded", "true");
+  button.textContent = "Hide";
 }
 
 function renderTable() {
@@ -474,30 +691,23 @@ function renderTable() {
     }
     row.appendChild(dueDateCell);
 
-    const attackVectorCell = document.createElement("td");
-    attackVectorCell.className = "attack-vector";
-    const attackContent = document.createElement("div");
-    attackContent.className = "attack-content";
-    attackContent.textContent = hasCvssVector ? cvssVector : "N/A";
-    attackVectorCell.appendChild(attackContent);
-    if (hasCvssVector && cvssVector.length > 20) {
-      appendToggleLink(attackVectorCell);
-    }
-    row.appendChild(attackVectorCell);
+    const whyCell = document.createElement("td");
+    whyCell.className = "why-cell";
+    appendCompactTagList(whyCell, triageTags(item));
+    row.appendChild(whyCell);
 
-    const descriptionCell = document.createElement("td");
-    const descriptionWrapper = document.createElement("div");
-    descriptionWrapper.className = "description-cell";
-    const descriptionContent = document.createElement("div");
-    descriptionContent.className = "desc-content";
-    const description = fieldText(item.description);
-    descriptionContent.textContent = description;
-    descriptionWrapper.appendChild(descriptionContent);
-    if (description.length > 120) {
-      appendToggleLink(descriptionWrapper);
-    }
-    descriptionCell.appendChild(descriptionWrapper);
-    row.appendChild(descriptionCell);
+    const detailsCell = document.createElement("td");
+    detailsCell.className = "details-control-cell";
+    const detailsButton = document.createElement("button");
+    detailsButton.type = "button";
+    detailsButton.className = "details-toggle";
+    detailsButton.setAttribute("aria-expanded", "false");
+    detailsButton.textContent = "Details";
+    detailsButton.addEventListener("click", () => {
+      toggleDetailRow(item, row, detailsButton);
+    });
+    detailsCell.appendChild(detailsButton);
+    row.appendChild(detailsCell);
 
     tbody.appendChild(row);
   });
@@ -605,14 +815,3 @@ function exportToCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
-
-document.addEventListener("click", function (e) {
-  if (e.target.classList.contains("toggle-link")) {
-    const content = e.target.previousElementSibling;
-
-    content.classList.toggle("expanded");
-    e.target.textContent = content.classList.contains("expanded")
-      ? "Show less"
-      : "Show more";
-  }
-});

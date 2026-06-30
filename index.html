@@ -156,14 +156,6 @@
               <input type="checkbox" class="column-toggle" data-column-id="dueDate" checked>
               Due Date
             </label>
-            <label>
-              <input type="checkbox" class="column-toggle" data-column-id="attackVector" checked>
-              Attack Vector
-            </label>
-            <label>
-              <input type="checkbox" class="column-toggle" data-column-id="description" checked>
-              Description
-            </label>
             <button type="button" id="showAllColumns">Show all</button>
           </div>
         </details>
@@ -191,8 +183,8 @@
             <col style="width: auto;"> <!-- EPSS % -->
             <col style="width: auto;"> <!-- Date Added -->
             <col style="width: auto;"> <!-- Due Date -->
-            <col style="width: 20%;"> <!-- Attack Vector -->
-            <col style="width: 25%;"> <!-- Description -->
+            <col style="width: 20%;"> <!-- Why this matters -->
+            <col style="width: 72px;"> <!-- Details -->
           </colgroup>
           <thead>
             <tr>
@@ -204,8 +196,8 @@
               <th onclick="sortTable(5)">EPSS % <span class="sort-indicator" id="sort-5"></span></th>
               <th onclick="sortTable(6)">Date Added <span class="sort-indicator" id="sort-6"></span></th>
               <th onclick="sortTable(7)">Due Date <span class="sort-indicator" id="sort-7"></span></th>
-              <th>Attack Vector</th>
-              <th>Description</th>
+              <th>Why this matters</th>
+              <th>Details</th>
             </tr>
           </thead>
           <tbody></tbody>
