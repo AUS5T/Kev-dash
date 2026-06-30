@@ -353,9 +353,55 @@ function showDashboardLoadError() {
   }
 }
 
+function isSafeCveId(value) {
+  return /^CVE-\d{4}-\d{4,}$/i.test(fieldText(value).trim());
+}
+
+function normalizedCveId(value) {
+  return fieldText(value).trim().toUpperCase();
+}
+
+function createNvdCveLink(cveId, label, title) {
+  const normalized = normalizedCveId(cveId);
+  if (!isSafeCveId(normalized)) {
+    return null;
+  }
+
+  const link = document.createElement("a");
+  link.href = `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(normalized)}`;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  if (title) {
+    link.title = title;
+  }
+  link.textContent = label;
+  return link;
+}
+
+function createTextCell(value) {
+  const cell = document.createElement("td");
+  cell.textContent = fieldText(value);
+  return cell;
+}
+
+function appendToggleLink(parent) {
+  const toggle = document.createElement("span");
+  toggle.className = "toggle-link";
+  toggle.textContent = "Show more";
+  parent.appendChild(toggle);
+}
+
+function cvssScoreText(value) {
+  const text = fieldText(value).trim();
+  if (!text || text === "N/A" || text.includes("<a ")) {
+    return "N/A";
+  }
+  return text;
+}
+
 function renderTable() {
   const tbody = document.querySelector("#kevTable tbody");
-  tbody.innerHTML = "";
+  tbody.replaceChildren();
   updateRecordCount();
 
   const totalPages = Math.max(1, Math.ceil(tableData.length / pageSize));
@@ -365,58 +411,93 @@ function renderTable() {
 
   pageData.forEach(item => {
     const row = document.createElement("tr");
+    const cveIdText = fieldText(item.cveID);
+    const safeCveId = isSafeCveId(cveIdText);
     const cvssVector = fieldText(item.cvssVector);
     const hasCvssVector = cvssVector && cvssVector !== "N/A";
+    const cvssScore = cvssScoreText(item.cvssScore);
 
-    const cvssCellContent = item.cvssScore !== "N/A" && item.cvssScore != null
-      ? item.cvssScore
-      : `<a href="https://nvd.nist.gov/vuln/detail/${item.cveID}" target="_blank" title="View on NVD">N/A</a>`;
+    const cveCell = document.createElement("td");
+    const cveLink = createNvdCveLink(cveIdText, safeCveId ? normalizedCveId(cveIdText) : cveIdText);
+    cveCell.appendChild(cveLink || document.createTextNode(cveIdText));
+    if (item.source !== "NVD") {
+      const kevPill = document.createElement("span");
+      kevPill.className = "kev-pill";
+      kevPill.textContent = "KEV";
+      cveCell.appendChild(kevPill);
+    }
+    row.appendChild(cveCell);
 
-    const cvssVersionText = item.cvssVersion && item.cvssVersion !== "N/A"
-      ? `<span class="cvss-version">(${item.cvssVersion})</span>`
-      : '';
+    const productCell = document.createElement("td");
+    if (item.vendor) {
+      const vendor = document.createElement("div");
+      vendor.className = "vendor-name";
+      vendor.textContent = fieldText(item.vendor);
+      productCell.appendChild(vendor);
+    }
+    if (item.product) {
+      const product = document.createElement("div");
+      product.className = "product-name";
+      product.textContent = fieldText(item.product);
+      productCell.appendChild(product);
+    }
+    row.appendChild(productCell);
 
-    row.innerHTML = `
-      <td>
-        <a href="https://nvd.nist.gov/vuln/detail/${item.cveID}" target="_blank">${item.cveID}</a>
-        ${item.source !== "NVD" ? '<span class="kev-pill">KEV</span>' : ''}
-      </td>
-      <td>
-        ${item.vendor ? `<div class="vendor-name">${item.vendor}</div>` : ''}
-        ${item.product ? `<div class="product-name">${item.product}</div>` : ''}
-      </td>
-      <td>${item.cvssSeverity || ''}</td>
-      <td title="${hasCvssVector ? cvssVector : ''}">
-        ${cvssCellContent} ${cvssVersionText}
-      </td>
-      <td>${item.epssScore !== "N/A" && item.epssScore != null ? formatFixed(item.epssScore, 4) : 'N/A'}</td>
-      <td>${item.epssPercentile !== "N/A" && item.epssPercentile != null ? formatPercent(item.epssPercentile) : 'N/A'}</td>
-      <td>${item.dateAdded || ''}</td>
-      <td class="${item.dueDate && new Date(item.dueDate) < new Date() ? 'overdue' : ''}">
-        ${item.dueDate || ''}
-      </td>
-      
-      <td class="attack-vector">
-        <div class="attack-content">
-          ${hasCvssVector ? cvssVector : 'N/A'}
-        </div>
-        ${hasCvssVector && cvssVector.length > 20
-          ? '<span class="toggle-link">Show more</span>'
-          : ''}
-      </td>
-      
-      <td>
-        <div class="description-cell">
-          <div class="desc-content">
-            ${item.description || ''}
-          </div>
-          ${item.description && item.description.length > 120
-            ? '<span class="toggle-link">Show more</span>'
-            : ''}
-        </div>
-      </td>
+    row.appendChild(createTextCell(item.cvssSeverity || ""));
 
-    `;
+    const cvssCell = document.createElement("td");
+    if (hasCvssVector) {
+      cvssCell.title = cvssVector;
+    }
+    if (cvssScore === "N/A") {
+      const cvssLink = createNvdCveLink(cveIdText, "N/A", "View on NVD");
+      cvssCell.appendChild(cvssLink || document.createTextNode("N/A"));
+    } else {
+      cvssCell.textContent = cvssScore;
+    }
+    if (item.cvssVersion && item.cvssVersion !== "N/A") {
+      cvssCell.appendChild(document.createTextNode(" "));
+      const cvssVersion = document.createElement("span");
+      cvssVersion.className = "cvss-version";
+      cvssVersion.textContent = `(${fieldText(item.cvssVersion)})`;
+      cvssCell.appendChild(cvssVersion);
+    }
+    row.appendChild(cvssCell);
+
+    row.appendChild(createTextCell(item.epssScore !== "N/A" && item.epssScore != null ? formatFixed(item.epssScore, 4) : "N/A"));
+    row.appendChild(createTextCell(item.epssPercentile !== "N/A" && item.epssPercentile != null ? formatPercent(item.epssPercentile) : "N/A"));
+    row.appendChild(createTextCell(item.dateAdded || ""));
+
+    const dueDateCell = createTextCell(item.dueDate || "");
+    if (item.dueDate && new Date(item.dueDate) < new Date()) {
+      dueDateCell.className = "overdue";
+    }
+    row.appendChild(dueDateCell);
+
+    const attackVectorCell = document.createElement("td");
+    attackVectorCell.className = "attack-vector";
+    const attackContent = document.createElement("div");
+    attackContent.className = "attack-content";
+    attackContent.textContent = hasCvssVector ? cvssVector : "N/A";
+    attackVectorCell.appendChild(attackContent);
+    if (hasCvssVector && cvssVector.length > 20) {
+      appendToggleLink(attackVectorCell);
+    }
+    row.appendChild(attackVectorCell);
+
+    const descriptionCell = document.createElement("td");
+    const descriptionWrapper = document.createElement("div");
+    descriptionWrapper.className = "description-cell";
+    const descriptionContent = document.createElement("div");
+    descriptionContent.className = "desc-content";
+    const description = fieldText(item.description);
+    descriptionContent.textContent = description;
+    descriptionWrapper.appendChild(descriptionContent);
+    if (description.length > 120) {
+      appendToggleLink(descriptionWrapper);
+    }
+    descriptionCell.appendChild(descriptionWrapper);
+    row.appendChild(descriptionCell);
 
     tbody.appendChild(row);
   });
