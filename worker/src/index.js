@@ -28,10 +28,10 @@ export default {
 
     return jsonResponse(
       {
-        ok: true,
-        message: "Kev-dash Worker. Use /seed-from-repo or one of the public data file paths.",
+        ok: false,
+        error: "Not found",
       },
-      200,
+      404,
     );
   },
 
