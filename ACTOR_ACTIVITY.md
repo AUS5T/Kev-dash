@@ -8,6 +8,24 @@ Actor-to-CVE attribution should be handled conservatively. General exploitation 
 
 Future automation should create unpublished candidate records only. Automated matches, summaries, or confidence guesses must not publish directly to `data/actor_cve_links.json`.
 
+## Candidate Queue
+
+Unreviewed leads belong in a local candidate queue, not in the public approved-record file. Candidate records may come from manual research, GitHub Issues, or future automation, but they are review material only and are not public attribution claims.
+
+Use `review/actor_activity_candidates.example.json` as the trackable empty example. A real local queue should use:
+
+```text
+review/actor_activity_candidates.json
+```
+
+Candidate records must be reviewed before they become approved records in `data/actor_cve_links.json`. Automation should create candidates only, and candidate files should not be deployed as public site data.
+
+Validate candidate files with:
+
+```bash
+python3 tools/validate_actor_activity_candidates.py review/actor_activity_candidates.example.json
+```
+
 Before deploying approved Actor Activity changes, run:
 
 ```bash

@@ -9,6 +9,10 @@ temp_dashboard/
 tmp/
 temp/
 
+# Local review queues
+review/actor_activity_candidates.json
+!review/actor_activity_candidates.example.json
+
 # Python cache
 __pycache__/
 *.pyc
