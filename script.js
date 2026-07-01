@@ -369,7 +369,7 @@ function renderActorActivityTable() {
   if (!actorActivityData.length) {
     renderActorActivityMessage(
       tbody,
-      "No source-backed actor-to-CVE relationships are published yet. Add reviewed public-source links to data/actor_cve_links.json to populate this table."
+      "No source-backed actor-to-CVE relationships are published yet. Records will appear here after review of reliable public sources."
     );
     return;
   }
