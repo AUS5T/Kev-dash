@@ -68,14 +68,14 @@ The dashboard combines CVSS, EPSS, descriptions, due dates, ransomware indicator
 
 ## Frontend Asset Versioning
 
-`index.html` references frontend assets with version query strings:
+HTML pages reference frontend assets with version query strings:
 
 ```html
-style.css?v=20260630-1
-script.js?v=20260630-1
+style.css?v=YYYYMMDD-N
+script.js?v=YYYYMMDD-N
 ```
 
-When `script.js` or `style.css` changes, bump the version in `index.html`.
+When `script.js` or `style.css` changes, bump the matching asset version across all HTML pages that reference that asset.
 
 This helps prevent users from being stuck on stale cached JavaScript or CSS after a deployment because the browser sees a new asset URL.
 
@@ -84,10 +84,10 @@ This helps prevent users from being stuck on stale cached JavaScript or CSS afte
 Frontend:
 
 ```bash
-git push origin main
+bash deploy-pages.sh
 ```
 
-Cloudflare Pages deploys frontend changes automatically from `main`.
+The deploy helper creates a clean Pages upload folder and deploys that folder. Do not deploy the repo root directly. See `DEPLOYMENT.md` for details.
 
 Worker:
 
@@ -109,7 +109,7 @@ curl -sL "https://patchsignal.org?v=$(date +%s)" | grep -n "style.css\\|script.j
 Check that deployed JavaScript includes current dashboard behavior:
 
 ```bash
-curl -sL "https://patchsignal.org/script.js?v=20260630-1" | grep -n "Copy investigation query\\|appendDetailSection"
+curl -sL "https://patchsignal.org/script.js?v=YYYYMMDD-N" | grep -n "Copy investigation query\\|appendDetailSection"
 ```
 
 Check the Worker timestamp:
@@ -157,7 +157,7 @@ http://localhost:8000
 - If frontend JS/CSS changes: bump the asset version in `index.html`.
 - If Worker CORS origins change: update the Worker allowlist and deploy the Worker.
 - If feed/update logic changes: deploy the Worker.
-- If static frontend changes: push `main` and verify the Cloudflare Pages deployment.
+- If static frontend changes: run `bash deploy-pages.sh` and verify the Cloudflare Pages deployment.
 - After deployment: verify both the custom domain and the Pages URL.
 
 ## Project Structure

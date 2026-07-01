@@ -2,11 +2,13 @@
 
 PatchSignal is a public vulnerability intelligence dashboard. It displays public vulnerability data only. The repository and deployment process must not contain secrets, credentials, private customer data, or internal-only notes.
 
-## Private Repository
+## Reporting Security Issues
 
-This repository is currently private. Security issues should be handled by the maintainer or approved collaborators.
+Security issues affecting PatchSignal.org, the PatchSignal frontend, the Worker/R2 routes, or this repository should be reported through GitHub private vulnerability reporting once it is enabled for the repository.
 
-Do not include sensitive details in public channels, screenshots, commits, logs, issue text, or pull request comments.
+Do not include sensitive exploit details, working payloads, private credentials, or non-public vulnerability details in public issues, screenshots, commits, logs, pull request comments, or discussions.
+
+This security reporting path is for issues affecting PatchSignal itself. General CVE corrections, source-data updates, and threat actor attribution submissions should be handled through the project's normal data review process, not as security vulnerabilities in PatchSignal.
 
 ## Secrets Handling
 
