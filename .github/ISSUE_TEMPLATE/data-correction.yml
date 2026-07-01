@@ -1,0 +1,48 @@
+name: Data correction
+description: Report a correction for public vulnerability data shown by PatchSignal.
+title: "Data correction: "
+labels:
+  - data-correction
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for general CVE or source-data corrections.
+
+        Do not include sensitive exploit details, private credentials, or non-public vulnerability details. Security issues affecting PatchSignal itself should use private vulnerability reporting.
+  - type: input
+    id: cve-id
+    attributes:
+      label: CVE ID
+      placeholder: CVE-YYYY-NNNNN
+    validations:
+      required: true
+  - type: textarea
+    id: incorrect-data
+    attributes:
+      label: What appears incorrect?
+      description: Describe the value, wording, or source data that appears wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested-correction
+    attributes:
+      label: Suggested correction
+      description: Describe the correction you are proposing.
+    validations:
+      required: true
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+      description: Link to a reliable public source supporting the correction.
+      placeholder: https://example.com/source
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add any extra context that helps review the correction.
+    validations:
+      required: false

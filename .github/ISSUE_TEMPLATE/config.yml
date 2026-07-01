@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/AUS5T/Kev-dash/security/advisories/new
+    about: Report a security issue affecting PatchSignal privately.

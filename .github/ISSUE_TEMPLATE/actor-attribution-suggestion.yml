@@ -1,0 +1,71 @@
+name: Actor attribution suggestion
+description: Suggest a source-backed relationship between a threat actor or group and a CVE.
+title: "Actor attribution suggestion: "
+labels:
+  - actor-attribution
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for source-backed actor-to-CVE attribution suggestions.
+
+        Do not include sensitive exploit details, private credentials, or non-public vulnerability details. Security issues affecting PatchSignal itself should use private vulnerability reporting.
+  - type: input
+    id: cve-id
+    attributes:
+      label: CVE ID
+      placeholder: CVE-YYYY-NNNNN
+    validations:
+      required: true
+  - type: input
+    id: actor
+    attributes:
+      label: Threat actor or group name
+      placeholder: Example Actor
+    validations:
+      required: true
+  - type: dropdown
+    id: relationship
+    attributes:
+      label: Relationship being suggested
+      options:
+        - exploited
+        - targeted
+        - leveraged
+        - associated
+        - suspected
+    validations:
+      required: true
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Confidence suggested by the source
+      options:
+        - Confirmed
+        - Reported
+        - Suspected
+        - Unattributed
+    validations:
+      required: true
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+      description: Link to a reliable public source supporting the suggested relationship.
+      placeholder: https://example.com/source
+    validations:
+      required: true
+  - type: textarea
+    id: evidence-summary
+    attributes:
+      label: Short evidence summary
+      description: Briefly explain what the public source says.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add any extra context that helps review the suggestion.
+    validations:
+      required: false

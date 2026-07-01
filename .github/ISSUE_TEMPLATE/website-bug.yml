@@ -1,0 +1,47 @@
+name: Website bug
+description: Report a non-security website bug or display issue.
+title: "Website bug: "
+labels:
+  - website-bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for non-security website bugs or display issues.
+
+        Do not include sensitive exploit details, private credentials, or non-public vulnerability details. Security issues affecting PatchSignal itself should use private vulnerability reporting.
+  - type: input
+    id: page-url
+    attributes:
+      label: Page URL
+      placeholder: https://patchsignal.org/
+    validations:
+      required: true
+  - type: textarea
+    id: broken
+    attributes:
+      label: What is broken?
+      description: Describe what is not working or displaying correctly.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe what you expected to happen.
+    validations:
+      required: true
+  - type: input
+    id: browser-device
+    attributes:
+      label: Browser/device if relevant
+      placeholder: Chrome on macOS, Safari on iPhone, etc.
+    validations:
+      required: false
+  - type: textarea
+    id: screenshot-log-note
+    attributes:
+      label: Screenshot/log note if relevant
+      description: Describe screenshots or logs without including sensitive details.
+    validations:
+      required: false
