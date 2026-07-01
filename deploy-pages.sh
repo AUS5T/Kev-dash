@@ -4,11 +4,14 @@ set -euo pipefail
 UPLOAD_DIR="../kev-dash-pages-upload"
 
 echo "PatchSignal Pages deploy helper"
-echo "1. Recreating clean upload folder: ${UPLOAD_DIR}"
+echo "1. Validating Actor Activity data"
+python3 tools/validate_actor_activity.py
+
+echo "2. Recreating clean upload folder: ${UPLOAD_DIR}"
 rm -rf "${UPLOAD_DIR}"
 mkdir -p "${UPLOAD_DIR}"
 
-echo "2. Copying public Pages assets only"
+echo "3. Copying public Pages assets only"
 rsync -av \
   --exclude='.git/' \
   --exclude='.github/' \
@@ -45,7 +48,7 @@ rsync -av \
   --exclude='*' \
   ./ "${UPLOAD_DIR}/"
 
-echo "3. Checking upload folder for files larger than 25 MiB"
+echo "4. Checking upload folder for files larger than 25 MiB"
 oversized_files="$(find "${UPLOAD_DIR}" -type f -size +25M -print)"
 
 if [[ -n "${oversized_files}" ]]; then
@@ -55,8 +58,8 @@ if [[ -n "${oversized_files}" ]]; then
   exit 1
 fi
 
-echo "4. No oversized files found"
-echo "5. Deploying clean upload folder to Cloudflare Pages"
+echo "5. No oversized files found"
+echo "6. Deploying clean upload folder to Cloudflare Pages"
 npx wrangler pages deploy "${UPLOAD_DIR}" --project-name kev-dash
 
 echo "Deploy command completed"

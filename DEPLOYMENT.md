@@ -12,12 +12,6 @@ That command points Wrangler at every local file under the repo root. This repo 
 
 ## Safe Pages Deploy
 
-Before deploying approved Actor Activity data changes, validate the public records:
-
-```bash
-python3 tools/validate_actor_activity.py
-```
-
 Use:
 
 ```bash
@@ -30,7 +24,7 @@ The script recreates a clean upload folder at:
 ../kev-dash-pages-upload
 ```
 
-It copies only public site assets into that folder, checks for files larger than 25 MiB, and deploys the clean folder with:
+It validates approved Actor Activity records, copies only public site assets into that folder, checks for files larger than 25 MiB, and deploys the clean folder with:
 
 ```bash
 npx wrangler pages deploy ../kev-dash-pages-upload --project-name kev-dash
