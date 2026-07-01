@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PatchSignal Security Contact</title>
+  <script>
+    try {
+      if (localStorage.getItem("patchsignal-theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    } catch (error) {}
+  </script>
+  <link rel="stylesheet" href="style.css?v=20260701-1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <main class="dashboard-shell content-shell">
+    <header class="header">
+      <div class="header-logo">
+        <img src="/assets/images/patchsignal-icon.png" alt="PatchSignal logo" class="logo" />
+      </div>
+      <div class="header-copy">
+        <h1>Security Contact</h1>
+        <p class="subtitle">Report security issues affecting PatchSignal itself.</p>
+      </div>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="index.html">Dashboard</a>
+        <a href="actor-activity.html">Actor Activity</a>
+        <a href="about.html">About</a>
+        <a href="sources.html">Data Sources</a>
+        <label class="dark-mode-switch site-theme-switch" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i>
+          <span class="switch">
+            <input type="checkbox" class="theme-toggle" aria-label="Toggle dark mode">
+            <span class="slider"></span>
+          </span>
+        </label>
+      </nav>
+    </header>
+
+    <section class="content-card">
+      <h2>Report a Security Issue</h2>
+      <p>
+        Use GitHub private vulnerability reporting for security issues affecting PatchSignal.org, the PatchSignal frontend, Worker/R2 routes, or this repository.
+      </p>
+      <p>
+        Do not post sensitive exploit details, working payloads, private credentials, or non-public vulnerability details in public issues, pull requests, discussions, screenshots, commits, or logs.
+      </p>
+      <p>
+        <a href="https://github.com/AUS5T/Kev-dash/security/advisories/new" target="_blank" rel="noopener noreferrer">Open a private vulnerability report on GitHub</a>
+      </p>
+    </section>
+
+    <section class="content-card">
+      <h2>Not Security Reports</h2>
+      <p>
+        General CVE corrections, data-source updates, and actor attribution suggestions are not security vulnerability reports for PatchSignal itself.
+      </p>
+      <p>
+        Those items should be handled through normal data review instead of the private vulnerability reporting channel.
+      </p>
+    </section>
+  </main>
+
+  <script src="script.js?v=20260701-1"></script>
+</body>
+</html>

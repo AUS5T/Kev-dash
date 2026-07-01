@@ -38,10 +38,12 @@ The Pages upload is intended to include:
 - `about.html`
 - `sources.html`
 - `actor-activity.html`
+- `security-contact.html`
 - `style.css`
 - `script.js`
 - `assets/`
 - `data/`
+- `.well-known/security.txt`
 - `_headers`
 - `robots.txt`
 - `.nojekyll`

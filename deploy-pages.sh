@@ -30,10 +30,12 @@ rsync -av \
   --include='/about.html' \
   --include='/sources.html' \
   --include='/actor-activity.html' \
+  --include='/security-contact.html' \
   --include='/style.css' \
   --include='/script.js' \
   --include='/assets/***' \
   --include='/data/***' \
+  --include='/.well-known/***' \
   --include='/_headers' \
   --include='/robots.txt' \
   --include='/.nojekyll' \

@@ -1,0 +1,4 @@
+Contact: https://patchsignal.org/security-contact.html
+Preferred-Languages: en
+Canonical: https://patchsignal.org/.well-known/security.txt
+Expires: 2027-06-30T23:59:59Z
