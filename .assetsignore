@@ -1,0 +1,28 @@
+# Version control and local Cloudflare cache
+.git/
+.github/
+.wrangler/
+
+# Worker/R2 source and local/generated feed data
+worker/
+feed/
+
+# Local dependencies, environments, caches, and logs
+node_modules/
+.venv/
+__pycache__/
+.pytest_cache/
+.env*
+*.log
+.DS_Store
+
+# Repo/docs/config files not needed as public Pages assets
+README.md
+SECURITY.md
+.gitignore
+.assetsignore
+package.json
+package-lock.json
+wrangler.toml
+wrangler.json
+wrangler.jsonc
