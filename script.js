@@ -4,6 +4,8 @@
 let tableData = [];
 let fullData = [];
 let currentPage = 1;
+let actorActivityData = [];
+let filteredActorActivityData = [];
 const pageSize = 25;
 const themeStorageKey = "patchsignal-theme";
 const columnVisibilityStorageKey = "patchsignal-visible-columns";
@@ -17,6 +19,7 @@ const optionalColumns = [
 
 initTheme();
 initDashboard();
+initActorActivity();
 
 function initTheme() {
   const savedTheme = getSavedTheme();
@@ -182,6 +185,228 @@ function initDashboard() {
 
   document.getElementById("toggleLegend").addEventListener("click", () => {
     document.getElementById("legendBox").classList.toggle("hidden");
+  });
+}
+
+function initActorActivity() {
+  if (!document.getElementById("actorActivityTable")) return;
+
+  const searchBox = document.getElementById("actorSearchBox");
+  const confidenceFilter = document.getElementById("actorConfidenceFilter");
+  const actorTypeFilter = document.getElementById("actorTypeFilter");
+
+  [searchBox, confidenceFilter, actorTypeFilter].forEach(control => {
+    if (control) {
+      control.addEventListener("input", applyActorActivityFilters);
+      control.addEventListener("change", applyActorActivityFilters);
+    }
+  });
+
+  loadActorActivityData();
+}
+
+function loadActorActivityData() {
+  fetch("data/actor_cve_links.json")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Actor activity request failed with status ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      actorActivityData = Array.isArray(data) ? data : [];
+      filteredActorActivityData = actorActivityData;
+      populateActorTypeFilter(actorActivityData);
+      applyActorActivityFilters();
+    })
+    .catch(error => {
+      console.error("Error loading actor activity data:", error);
+      showActorActivityLoadError();
+    });
+}
+
+function populateActorTypeFilter(data) {
+  const actorTypeFilter = document.getElementById("actorTypeFilter");
+  if (!actorTypeFilter) return;
+
+  const currentValue = actorTypeFilter.value;
+  const types = Array.from(new Set(data
+    .map(item => fieldText(item.actor_type).trim())
+    .filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b));
+
+  actorTypeFilter.replaceChildren();
+
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All Actor Types";
+  actorTypeFilter.appendChild(allOption);
+
+  types.forEach(type => {
+    const option = document.createElement("option");
+    option.value = type;
+    option.textContent = type;
+    actorTypeFilter.appendChild(option);
+  });
+
+  actorTypeFilter.value = types.includes(currentValue) ? currentValue : "";
+}
+
+function applyActorActivityFilters() {
+  const search = fieldText(document.getElementById("actorSearchBox")?.value).trim().toLowerCase();
+  const confidenceValue = fieldText(document.getElementById("actorConfidenceFilter")?.value).trim().toLowerCase();
+  const actorTypeValue = fieldText(document.getElementById("actorTypeFilter")?.value).trim();
+
+  filteredActorActivityData = actorActivityData.filter(item => {
+    const confidence = normalizedConfidence(item.confidence);
+    const matchesConfidence = confidenceValue === "default"
+      ? confidence !== "suspected"
+      : (!confidenceValue || confidence === confidenceValue);
+    const matchesActorType = actorTypeValue ? fieldText(item.actor_type).trim() === actorTypeValue : true;
+    const searchableText = [
+      item.cve,
+      item.actor,
+      item.actor_type,
+      item.evidence_summary,
+    ].map(fieldText).join(" ").toLowerCase();
+    const matchesSearch = search ? searchableText.includes(search) : true;
+
+    return matchesConfidence && matchesActorType && matchesSearch;
+  });
+
+  renderActorActivityTable();
+}
+
+function normalizedConfidence(value) {
+  const confidence = fieldText(value).trim().toLowerCase();
+  return ["confirmed", "reported", "suspected", "unattributed"].includes(confidence)
+    ? confidence
+    : "unattributed";
+}
+
+function confidenceLabel(value) {
+  const confidence = normalizedConfidence(value);
+  return confidence.charAt(0).toUpperCase() + confidence.slice(1);
+}
+
+function updateActorRecordCount() {
+  const recordCount = document.getElementById("actorRecordCount");
+  if (!recordCount) return;
+
+  const count = Array.isArray(filteredActorActivityData) ? filteredActorActivityData.length : 0;
+  recordCount.classList.remove("is-loading", "is-error");
+  recordCount.textContent = `${count.toLocaleString()} ${count === 1 ? "record" : "records"}`;
+}
+
+function showActorActivityLoadError() {
+  const recordCount = document.getElementById("actorRecordCount");
+  if (recordCount) {
+    recordCount.classList.remove("is-loading");
+    recordCount.classList.add("is-error");
+    recordCount.textContent = "Data unavailable";
+  }
+
+  const tbody = document.querySelector("#actorActivityTable tbody");
+  if (tbody) {
+    renderActorActivityMessage(tbody, "Actor activity data is unavailable.");
+  }
+}
+
+function createSafeSourceLink(item) {
+  const sourceName = fieldText(item.source_name).trim() || "Source";
+  const sourceUrl = fieldText(item.source_url).trim();
+  if (!sourceUrl) {
+    return document.createTextNode(sourceName);
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(sourceUrl);
+  } catch (error) {
+    return document.createTextNode(sourceName);
+  }
+
+  if (!["https:", "http:"].includes(parsedUrl.protocol)) {
+    return document.createTextNode(sourceName);
+  }
+
+  const link = document.createElement("a");
+  link.href = parsedUrl.href;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.textContent = sourceName;
+  return link;
+}
+
+function createConfidenceCell(value) {
+  const cell = document.createElement("td");
+  const confidence = normalizedConfidence(value);
+  const tag = document.createElement("span");
+  tag.className = `detail-tag confidence-${confidence}`;
+  tag.textContent = confidenceLabel(confidence);
+  cell.appendChild(tag);
+  return cell;
+}
+
+function renderActorActivityMessage(tbody, message) {
+  tbody.replaceChildren();
+
+  const row = document.createElement("tr");
+  const cell = document.createElement("td");
+  cell.colSpan = 8;
+  cell.className = "empty-table-message";
+  cell.textContent = message;
+  row.appendChild(cell);
+  tbody.appendChild(row);
+}
+
+function renderActorActivityTable() {
+  const tbody = document.querySelector("#actorActivityTable tbody");
+  if (!tbody) return;
+
+  updateActorRecordCount();
+
+  if (!actorActivityData.length) {
+    renderActorActivityMessage(
+      tbody,
+      "No source-backed actor-to-CVE relationships are published yet. Add reviewed public-source links to data/actor_cve_links.json to populate this table."
+    );
+    return;
+  }
+
+  if (!filteredActorActivityData.length) {
+    renderActorActivityMessage(tbody, "No actor activity records match the current filters.");
+    return;
+  }
+
+  tbody.replaceChildren();
+
+  filteredActorActivityData.forEach(item => {
+    const row = document.createElement("tr");
+    const confidence = normalizedConfidence(item.confidence);
+    if (confidence === "suspected") {
+      row.className = "is-deemphasized";
+    }
+
+    const cveCell = document.createElement("td");
+    const cveText = fieldText(item.cve).trim();
+    const cveLink = createNvdCveLink(cveText, isSafeCveId(cveText) ? normalizedCveId(cveText) : cveText);
+    cveCell.appendChild(cveLink || document.createTextNode(cveText || "N/A"));
+    row.appendChild(cveCell);
+
+    row.appendChild(createTextCell(item.actor || "N/A"));
+    row.appendChild(createTextCell(item.actor_type || "N/A"));
+    row.appendChild(createTextCell(item.relationship || "N/A"));
+    row.appendChild(createConfidenceCell(item.confidence));
+    row.appendChild(createTextCell(item.evidence_summary || "N/A"));
+
+    const sourceCell = document.createElement("td");
+    sourceCell.appendChild(createSafeSourceLink(item));
+    row.appendChild(sourceCell);
+
+    row.appendChild(createTextCell(item.last_reviewed || "N/A"));
+
+    tbody.appendChild(row);
   });
 }
 
