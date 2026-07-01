@@ -26,6 +26,30 @@ Validate candidate files with:
 python3 tools/validate_actor_activity_candidates.py review/actor_activity_candidates.example.json
 ```
 
+## Discovery Inputs
+
+Future discovery automation should use explicit review inputs that define where it may look and what actor or group strings it may search for.
+
+`review/source_watchlist.example.json` is the safe-to-track example for source watchlists. Source watchlists define allowed public sources for future discovery work, such as government advisories, vendor blogs, security research, CERT pages, and security news sources.
+
+`review/actor_aliases.example.json` is the safe-to-track example for actor alias lists. Actor alias lists define display names, aliases, actor types, and avoid terms that future automation may use for matching.
+
+These files are discovery inputs, not public attribution claims. Real local versions may be kept private if desired:
+
+```text
+review/source_watchlist.json
+review/actor_aliases.json
+```
+
+Automation must still write only to unpublished candidate records. Human review is required before any candidate becomes an approved public record.
+
+Validate discovery input examples with:
+
+```bash
+python3 tools/validate_actor_activity_sources.py review/source_watchlist.example.json
+python3 tools/validate_actor_aliases.py review/actor_aliases.example.json
+```
+
 Before deploying approved Actor Activity changes, run:
 
 ```bash

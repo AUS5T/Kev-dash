@@ -11,7 +11,11 @@ temp/
 
 # Local review queues
 review/actor_activity_candidates.json
+review/source_watchlist.json
+review/actor_aliases.json
 !review/actor_activity_candidates.example.json
+!review/source_watchlist.example.json
+!review/actor_aliases.example.json
 
 # Python cache
 __pycache__/
