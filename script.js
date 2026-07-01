@@ -6,6 +6,7 @@ let fullData = [];
 let currentPage = 1;
 let actorActivityData = [];
 let filteredActorActivityData = [];
+let pendingDetailCve = null;
 const pageSize = 25;
 const themeStorageKey = "patchsignal-theme";
 const columnVisibilityStorageKey = "patchsignal-visible-columns";
@@ -185,6 +186,10 @@ function initDashboard() {
 
   document.getElementById("toggleLegend").addEventListener("click", () => {
     document.getElementById("legendBox").classList.toggle("hidden");
+  });
+
+  window.addEventListener("popstate", () => {
+    syncDetailFromUrl();
   });
 }
 
@@ -430,6 +435,7 @@ function loadDashboardData() {
       fullData = normalizeDashboardData(data);
       tableData = fullData;
       updateSummaryMetrics(fullData);
+      pendingDetailCve = getCveQueryParam();
       renderTable();
     })
     .catch(error => {
@@ -584,6 +590,46 @@ function normalizedCveId(value) {
   return fieldText(value).trim().toUpperCase();
 }
 
+function getCveQueryParam() {
+  const params = new URLSearchParams(window.location.search);
+  const cve = normalizedCveId(params.get("cve"));
+  return isSafeCveId(cve) ? cve : null;
+}
+
+function cveDeepLink(cveId) {
+  const normalized = normalizedCveId(cveId);
+  if (!isSafeCveId(normalized)) {
+    return window.location.href;
+  }
+
+  const url = new URL(window.location.pathname || "/", window.location.origin);
+  url.searchParams.set("cve", normalized);
+  return url.href;
+}
+
+function setCveQueryParam(cveId, historyMethod = "push") {
+  const normalized = normalizedCveId(cveId);
+  if (!isSafeCveId(normalized)) return;
+
+  const current = getCveQueryParam();
+  if (current === normalized) return;
+
+  const url = cveDeepLink(normalized);
+  const method = historyMethod === "replace" ? "replaceState" : "pushState";
+  window.history[method]({ cve: normalized }, "", url);
+}
+
+function removeCveQueryParam(historyMethod = "push") {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("cve")) return;
+
+  params.delete("cve");
+  const query = params.toString();
+  const url = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+  const method = historyMethod === "replace" ? "replaceState" : "pushState";
+  window.history[method]({}, "", url || window.location.pathname || "/");
+}
+
 function createNvdCveLink(cveId, label, title) {
   const normalized = normalizedCveId(cveId);
   if (!isSafeCveId(normalized)) {
@@ -708,19 +754,39 @@ function investigationQueryText(item) {
 }
 
 function copyPlainText(text, button) {
+  const showCopyResult = label => {
+    const originalText = button.dataset.label || button.textContent;
+    button.textContent = label;
+    window.setTimeout(() => {
+      button.textContent = originalText;
+    }, 1200);
+  };
+
   if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
-    button.textContent = "Copy unavailable";
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "");
+    textArea.style.position = "fixed";
+    textArea.style.top = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } catch (error) {
+      copied = false;
+    }
+
+    textArea.remove();
+    showCopyResult(copied ? "Copied" : "Copy failed");
     return;
   }
 
   navigator.clipboard.writeText(text).then(() => {
-    const originalText = button.dataset.label || button.textContent;
-    button.textContent = "Copied";
-    window.setTimeout(() => {
-      button.textContent = originalText;
-    }, 1200);
+    showCopyResult("Copied");
   }).catch(() => {
-    button.textContent = "Copy failed";
+    showCopyResult("Copy failed");
   });
 }
 
@@ -803,6 +869,11 @@ function createDetailRow(item, columnCount) {
   actions.appendChild(createDetailActionButton("Copy investigation query", event => {
     copyPlainText(investigationQueryText(item), event.currentTarget);
   }));
+  if (isSafeCveId(cve)) {
+    actions.appendChild(createDetailActionButton("Share CVE", event => {
+      copyPlainText(cveDeepLink(cve), event.currentTarget);
+    }));
+  }
 
   const nvdLink = createNvdCveLink(item.cveID, "Open NVD");
   if (nvdLink) {
@@ -825,13 +896,17 @@ function collapseExpandedDetailRows(tbody) {
   });
 }
 
-function toggleDetailRow(item, row, button) {
+function toggleDetailRow(item, row, button, options = {}) {
   const tbody = row.parentElement;
   const isExpanded = button.getAttribute("aria-expanded") === "true";
+  const cve = isSafeCveId(item.cveID) ? normalizedCveId(item.cveID) : null;
 
   collapseExpandedDetailRows(tbody);
 
   if (isExpanded) {
+    if (options.updateUrl !== false) {
+      removeCveQueryParam(options.historyMethod || "push");
+    }
     return;
   }
 
@@ -839,6 +914,58 @@ function toggleDetailRow(item, row, button) {
   row.after(detailRow);
   button.setAttribute("aria-expanded", "true");
   button.textContent = "Hide";
+
+  if (cve && options.updateUrl !== false) {
+    setCveQueryParam(cve, options.historyMethod || "push");
+  }
+}
+
+function openDetailForCve(cveId, options = {}) {
+  const normalized = normalizedCveId(cveId);
+  if (!isSafeCveId(normalized)) return false;
+
+  let dataIndex = tableData.findIndex(item => normalizedCveId(item.cveID) === normalized);
+  if (dataIndex === -1) {
+    dataIndex = fullData.findIndex(item => normalizedCveId(item.cveID) === normalized);
+    if (dataIndex === -1) return false;
+    tableData = fullData;
+  }
+
+  currentPage = Math.floor(dataIndex / pageSize) + 1;
+  renderTable();
+
+  const tbody = document.querySelector("#kevTable tbody");
+  if (!tbody) return false;
+
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  const row = rows.find(candidateRow => {
+    const firstCellText = fieldText(candidateRow.cells[0]?.textContent);
+    return firstCellText.includes(normalized);
+  });
+  const button = row?.querySelector(".details-toggle");
+  if (!row || !button) return false;
+
+  toggleDetailRow(tableData[dataIndex], row, button, {
+    updateUrl: options.updateUrl !== false,
+    historyMethod: options.historyMethod || "replace",
+  });
+  row.scrollIntoView({ behavior: options.scroll === false ? "auto" : "smooth", block: "center" });
+  return true;
+}
+
+function syncDetailFromUrl() {
+  if (!document.getElementById("kevTable") || !fullData.length) return;
+
+  const cve = getCveQueryParam();
+  const tbody = document.querySelector("#kevTable tbody");
+  if (!cve) {
+    if (tbody) {
+      collapseExpandedDetailRows(tbody);
+    }
+    return;
+  }
+
+  openDetailForCve(cve, { updateUrl: false });
 }
 
 function renderTable() {
@@ -941,6 +1068,12 @@ function renderTable() {
   document.getElementById("prevPage").disabled = currentPage === 1;
   document.getElementById("nextPage").disabled = currentPage === totalPages;
   applyColumnVisibility();
+
+  if (pendingDetailCve) {
+    const cve = pendingDetailCve;
+    pendingDetailCve = null;
+    openDetailForCve(cve, { updateUrl: false });
+  }
 }
 
 function applyFilters() {
