@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Threat Actor CVE Activity</title>
+  <script>
+    try {
+      if (localStorage.getItem("patchsignal-theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    } catch (error) {}
+  </script>
+  <link rel="stylesheet" href="style.css?v=20260701-1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body>
+  <main class="dashboard-shell content-shell">
+    <header class="header">
+      <div class="header-logo">
+        <img src="/assets/images/patchsignal-icon.png" alt="PatchSignal logo" class="logo" />
+      </div>
+      <div class="header-copy">
+        <h1>Threat Actor CVE Activity</h1>
+        <p class="subtitle">Source-backed tracking of named threat actor and group activity tied to CVEs.</p>
+      </div>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="index.html">Dashboard</a>
+        <a href="actor-activity.html" aria-current="page">Actor Activity</a>
+        <a href="about.html">About</a>
+        <a href="sources.html">Data Sources</a>
+        <label class="dark-mode-switch site-theme-switch" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i>
+          <span class="switch">
+            <input type="checkbox" class="theme-toggle" aria-label="Toggle dark mode">
+            <span class="slider"></span>
+          </span>
+        </label>
+      </nav>
+    </header>
+
+    <section class="content-card">
+      <h2>Methodology</h2>
+      <p>
+        A CVE can be confirmed as exploited in the wild without knowing who used it. A CVE can also be associated with ransomware activity without knowing which ransomware group used it.
+      </p>
+      <p>
+        Separately, a CVE can be confirmed or credibly reported as used by a named actor or group, such as APT29, MuddyWater, Dragonfly, UNC3886, or another tracked threat group.
+      </p>
+      <p>
+        These are all valid intelligence states, but they should not be treated as the same thing. Actor-to-CVE attribution is uncommon, but valuable when confirmed or credibly reported by reliable public sources. This page tracks only source-backed actor-to-CVE relationships.
+      </p>
+    </section>
+
+    <section class="content-card">
+      <h2>Confidence Legend</h2>
+      <div class="confidence-legend" aria-label="Confidence legend">
+        <div class="confidence-item">
+          <span class="detail-tag confidence-confirmed">Confirmed</span>
+          <p>The source explicitly says the named actor exploited, used, or leveraged the CVE.</p>
+        </div>
+        <div class="confidence-item">
+          <span class="detail-tag confidence-reported">Reported</span>
+          <p>Credible public reporting associates the actor with the CVE, but the wording may be less direct or attribution may be based on reporting context.</p>
+        </div>
+        <div class="confidence-item is-muted">
+          <span class="detail-tag confidence-suspected">Suspected</span>
+          <p>Plausible but uncertain. Suspected rows are visually de-emphasized and hidden by default in the table filters.</p>
+        </div>
+        <div class="confidence-item">
+          <span class="detail-tag confidence-unattributed">Unattributed</span>
+          <p>Exploitation activity exists, but no named actor is confirmed. This should usually be explanatory or contextual rather than mixed into the actor table.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="toolbar-panel" aria-label="Actor activity filters">
+      <div class="controls">
+        <input type="text" id="actorSearchBox" placeholder="CVE, actor, type, or evidence..." />
+        <select id="actorConfidenceFilter">
+          <option value="default">Confirmed, Reported, Unattributed</option>
+          <option value="">All Confidence Levels</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="reported">Reported</option>
+          <option value="suspected">Suspected</option>
+          <option value="unattributed">Unattributed</option>
+        </select>
+        <select id="actorTypeFilter">
+          <option value="">All Actor Types</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="data-grid-panel">
+      <div class="section-heading grid-heading">
+        <h2>Source-Backed Actor-to-CVE Links</h2>
+        <span class="record-count is-loading" id="actorRecordCount">
+          <span class="loading-skeleton record-skeleton"></span>
+          <span>Loading records</span>
+        </span>
+      </div>
+
+      <div class="table-container">
+        <table id="actorActivityTable">
+          <thead>
+            <tr>
+              <th>CVE</th>
+              <th>Actor</th>
+              <th>Actor type</th>
+              <th>Relationship</th>
+              <th>Confidence</th>
+              <th>Evidence summary</th>
+              <th>Source</th>
+              <th>Last reviewed</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-card">
+      <h2>Disclaimer</h2>
+      <p>
+        Attribution is not always available, and absence from this page does not mean a CVE has not been used by a threat actor. It only means this project has not identified a reliable public source connecting that CVE to a named actor or group.
+      </p>
+    </section>
+  </main>
+
+  <script src="script.js?v=20260630-2"></script>
+</body>
+</html>
