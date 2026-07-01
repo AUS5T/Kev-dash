@@ -12,6 +12,12 @@ That command points Wrangler at every local file under the repo root. This repo 
 
 ## Safe Pages Deploy
 
+Before deploying approved Actor Activity data changes, validate the public records:
+
+```bash
+python3 tools/validate_actor_activity.py
+```
+
 Use:
 
 ```bash
